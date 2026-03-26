@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ARKTECH — Command Center v5</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#060911;--bg2:#0a0f1c;--surface:#0d1425;--card:#111827;
+  --border:#1c2b42;--border2:#253650;
+  --cyan:#00d9f5;--violet:#7b5cfa;--rose:#ff4d8d;--emerald:#00e07a;--gold:#ffb800;
+  --text:#e2e8f6;--sub:#6b7fa0;--dim:#2a3a52;
+  --r:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(0,217,245,.04),transparent);pointer-events:none;z-index:0}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.shell{display:flex;min-height:100vh;position:relative;z-index:1}
+/* SIDEBAR */
+.sidebar{width:220px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:20px 16px 14px;border-bottom:1px solid var(--border)}
+.logo-name{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;background:linear-gradient(120deg,var(--cyan),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-tag{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--dim);letter-spacing:2px;margin-top:2px}
+.nav{flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:2px}
+.nav-group{margin-bottom:14px}
+.nav-group-label{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);padding:0 8px;margin-bottom:3px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:var(--r);cursor:pointer;color:var(--sub);font-size:12.5px;font-weight:500;transition:all .12s;border:1px solid transparent;user-select:none}
+.nav-item:hover{background:var(--card);color:var(--text)}
+.nav-item.active{background:rgba(0,217,245,.07);border-color:rgba(0,217,245,.14);color:var(--cyan)}
+.nav-ico{font-size:12px;width:14px;text-align:center;flex-shrink:0;opacity:.65}
+.nav-item.active .nav-ico{opacity:1}
+.nav-badge{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;background:var(--rose);color:#fff;padding:1px 5px;border-radius:99px}
+.sidebar-foot{padding:10px;border-top:1px solid var(--border)}
+.user-row{display:flex;align-items:center;gap:8px;padding:8px;background:var(--card);border-radius:var(--r);cursor:pointer}
+.ava{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--rose));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.user-name{font-size:12px;font-weight:600}
+.user-role{font-size:9px;color:var(--sub);font-family:'JetBrains Mono',monospace}
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:54px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:10px;position:sticky;top:0;background:rgba(6,9,17,.9);backdrop-filter:blur(16px);z-index:100}
+.topbar-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;flex:1}
+.search-btn{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:0 12px;height:32px;cursor:pointer;color:var(--sub);font-size:12px;transition:border .12s;user-select:none}
+.search-btn:hover{border-color:var(--border2);color:var(--text)}
+.search-btn kbd{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.icon-btn{width:32px;height:32px;border-radius:var(--r);background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;color:var(--sub);transition:all .12s;position:relative;flex-shrink:0}
+.icon-btn:hover{background:var(--border);color:var(--text)}
+.notif-dot{position:absolute;top:5px;right:5px;width:5px;height:5px;border-radius:50%;background:var(--rose);border:1.5px solid var(--bg)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:0 12px;height:32px;border-radius:var(--r);font-size:12.5px;font-weight:600;cursor:pointer;border:none;transition:all .12s;font-family:inherit}
+.btn-primary{background:var(--cyan);color:#000}
+.btn-primary:hover{opacity:.88;transform:translateY(-1px)}
+.btn-ghost{background:var(--card);border:1px solid var(--border);color:var(--text)}
+.btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn-sm{height:28px;font-size:11px;padding:0 10px}
+/* CONTENT */
+.content{flex:1;padding:18px;overflow-y:auto}
+.page{animation:fadeIn .18s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+/* GRIDS */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.g23{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:16px}
+@media(max-width:1100px){.g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}.g23{grid-template-columns:1fr}}
+@media(max-width:700px){.g4,.g3,.g2,.g23{grid-template-columns:1fr}}
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:8px}
+.card-title{font-family:'Syne',sans-serif;font-size:12.5px;font-weight:700}
+.card-sub{font-size:10px;color:var(--sub);margin-top:2px;font-family:'JetBrains Mono',monospace}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.page-h{font-family:'Syne',sans-serif;font-size:16px;font-weight:800}
+.page-hsub{font-size:11px;color:var(--sub);margin-top:2px}
+/* STAT */
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;position:relative;overflow:hidden;cursor:pointer;transition:all .18s}
+.stat:hover{border-color:var(--border2);transform:translateY(-2px)}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.s1::before{background:linear-gradient(90deg,var(--cyan),transparent)}
+.s2::before{background:linear-gradient(90deg,var(--violet),transparent)}
+.s3::before{background:linear-gradient(90deg,var(--rose),transparent)}
+.s4::before{background:linear-gradient(90deg,var(--emerald),transparent)}
+.stat-label{font-size:10px;color:var(--sub);font-family:'JetBrains Mono',monospace;margin-bottom:6px;letter-spacing:.5px}
+.stat-val{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;line-height:1;margin-bottom:4px}
+.s1 .stat-val{color:var(--cyan)}.s2 .stat-val{color:var(--violet)}.s3 .stat-val{color:var(--rose)}.s4 .stat-val{color:var(--emerald)}
+.stat-delta{font-size:10.5px;font-weight:500}
+.up{color:var(--emerald)}.down{color:var(--rose)}
+.stat-ico{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:24px;opacity:.05}
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:2px 6px;border-radius:99px;font-size:9px;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:.3px}
+.bg{background:rgba(0,224,122,.1);color:var(--emerald);border:1px solid rgba(0,224,122,.2)}
+.bb{background:rgba(0,217,245,.1);color:var(--cyan);border:1px solid rgba(0,217,245,.2)}
+.bp{background:rgba(123,92,250,.1);color:var(--violet);border:1px solid rgba(123,92,250,.2)}
+.br{background:rgba(255,77,141,.1);color:var(--rose);border:1px solid rgba(255,77,141,.2)}
+.by{background:rgba(255,184,0,.1);color:var(--gold);border:1px solid rgba(255,184,0,.2)}
+/* PROGRESS */
+.prog-row{margin-bottom:9px}
+.prog-head{display:flex;justify-content:space-between;margin-bottom:4px;font-size:11px}
+.prog-track{height:3px;background:var(--border);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;border-radius:99px;transition:width .8s cubic-bezier(.23,1,.32,1)}
+/* LIST ITEM */
+.li{display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:5px;cursor:pointer;transition:border .12s}
+.li:hover{border-color:var(--border2)}
+.li-ico{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.li-info{flex:1;min-width:0}
+.li-name{font-size:12.5px;font-weight:600;margin-bottom:1px}
+.li-sub{font-size:10px;color:var(--sub);font-family:'JetBrains Mono',monospace}
+/* INPUT */
+.inp{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:8px 11px;font-size:12.5px;color:var(--text);font-family:inherit;outline:none;transition:border .12s}
+.inp:focus{border-color:var(--cyan)}
+.inp::placeholder{color:var(--dim)}
+textarea.inp{min-height:80px;resize:vertical;line-height:1.6}
+select.inp{cursor:pointer}
+.field{margin-bottom:11px}
+.field label{display:block;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--sub);margin-bottom:4px;letter-spacing:.5px;text-transform:uppercase}
+/* PILLS */
+.pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.pill{padding:4px 11px;border-radius:99px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg2);color:var(--sub);font-family:inherit;transition:all .12s}
+.pill:hover,.pill.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,217,245,.05)}
+/* AI */
+.spinner{width:13px;height:13px;border:2px solid var(--border2);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-loading{display:flex;align-items:center;gap:9px;padding:18px;color:var(--sub);font-size:12px}
+/* LIVE */
+.live{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--emerald);background:rgba(0,224,122,.08);border:1px solid rgba(0,224,122,.18);padding:3px 8px;border-radius:99px}
+.dot-pulse{width:5px;height:5px;border-radius:50%;background:var(--emerald);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(6,9,17,.8);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:22px;width:440px;max-width:95vw;box-shadow:0 24px 60px rgba(0,0,0,.6);animation:slideUp .18s ease}
+@keyframes slideUp{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+.modal-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:3px}
+.modal-sub{font-size:11px;color:var(--sub);margin-bottom:18px;font-family:'JetBrains Mono',monospace}
+.modal-actions{display:flex;gap:7px;justify-content:flex-end;margin-top:14px}
+/* CMD */
+.cmd-overlay{display:none;position:fixed;inset:0;background:rgba(6,9,17,.75);backdrop-filter:blur(8px);z-index:2000;align-items:flex-start;justify-content:center;padding-top:14vh}
+.cmd-overlay.open{display:flex}
+.cmd-box{background:var(--surface);border:1px solid var(--border2);border-radius:12px;width:540px;max-width:95vw;overflow:hidden;box-shadow:0 30px 70px rgba(0,0,0,.6);animation:slideUp .13s ease}
+.cmd-row{display:flex;align-items:center;gap:9px;padding:13px 16px;border-bottom:1px solid var(--border)}
+.cmd-input{flex:1;background:none;border:none;outline:none;font-size:14px;font-family:inherit;color:var(--text)}
+.cmd-input::placeholder{color:var(--dim)}
+.cmd-esc{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--dim);background:var(--card);padding:2px 5px;border-radius:4px}
+.cmd-list{max-height:320px;overflow-y:auto}
+.cmd-section{padding:7px 16px 3px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}
+.cmd-item{display:flex;align-items:center;gap:9px;padding:8px 16px;cursor:pointer;transition:background .09s}
+.cmd-item:hover,.cmd-item.sel{background:var(--card)}
+.cmd-item-ico{width:24px;height:24px;border-radius:6px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.cmd-item-text{flex:1;font-size:12.5px;font-weight:500}
+.cmd-item-kbd{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--dim)}
+.cmd-foot{padding:7px 16px;border-top:1px solid var(--border);display:flex;gap:12px}
+.cmd-hint{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--dim);display:flex;align-items:center;gap:4px}
+.cmd-hint kbd{background:var(--card);padding:1px 5px;border-radius:4px}
+/* NOTIF */
+.notif-panel{display:none;position:fixed;top:62px;right:14px;width:320px;background:var(--surface);border:1px solid var(--border2);border-radius:11px;box-shadow:0 14px 36px rgba(0,0,0,.5);z-index:500;overflow:hidden}
+.notif-panel.open{display:block;animation:slideUp .13s ease}
+.notif-head{padding:12px 14px 9px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.notif-head-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700}
+.notif-mark{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--cyan);cursor:pointer}
+.notif-list{max-height:360px;overflow-y:auto}
+.notif-item{display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .09s}
+.notif-item:hover{background:var(--card)}
+.notif-item.unread{background:rgba(0,217,245,.02)}
+.notif-ico{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.notif-body{flex:1}
+.notif-text{font-size:11.5px;line-height:1.5}
+.notif-time{font-size:9px;color:var(--sub);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.notif-udot{width:5px;height:5px;border-radius:50%;background:var(--cyan);margin-top:5px;flex-shrink:0}
+/* KANBAN */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+@media(max-width:1200px){.kanban{grid-template-columns:1fr 1fr}}
+.k-col{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.k-head{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.k-title{font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:.5px;text-transform:uppercase}
+.k-count{font-size:9px;background:var(--bg2);border:1px solid var(--border);padding:1px 6px;border-radius:99px;font-family:'JetBrains Mono',monospace;color:var(--sub)}
+.k-cards{padding:7px;display:flex;flex-direction:column;gap:5px;min-height:50px}
+.k-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:9px;cursor:pointer;transition:all .12s}
+.k-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.k-card-title{font-size:11.5px;font-weight:600;margin-bottom:4px}
+.k-card-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.k-client{font-size:9px;color:var(--sub);font-family:'JetBrains Mono',monospace}
+.k-due{font-size:9px;font-family:'JetBrains Mono',monospace}
+.due-ok{color:var(--emerald)}.due-warn{color:var(--gold)}.due-late{color:var(--rose)}
+/* GOAL RING */
+.gr-wrap{position:relative;width:76px;height:76px;margin:0 auto 8px}
+.gr-svg{transform:rotate(-90deg)}
+.gr-bg{fill:none;stroke:var(--border);stroke-width:6}
+.gr-fill{fill:none;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset 1.2s cubic-bezier(.23,1,.32,1)}
+.gr-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gr-pct{font-family:'Syne',sans-serif;font-size:15px;font-weight:800}
+/* HEALTH */
+.health-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border .12s;margin-bottom:5px}
+.health-card:hover{border-color:var(--border2)}
+.health-ring{width:40px;height:40px;flex-shrink:0;position:relative}
+.health-ring svg{transform:rotate(-90deg)}
+.health-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:10px;font-weight:800}
+.health-info{flex:1}
+.health-name{font-size:12px;font-weight:600;margin-bottom:3px}
+.health-signals{display:flex;gap:4px;flex-wrap:wrap}
+.hs{font-size:9px;font-family:'JetBrains Mono',monospace;padding:1px 5px;border-radius:4px;font-weight:600}
+.hs-ok{background:rgba(0,224,122,.1);color:var(--emerald)}
+.hs-warn{background:rgba(255,184,0,.1);color:var(--gold)}
+.hs-risk{background:rgba(255,77,141,.1);color:var(--rose)}
+/* AI INSIGHTS */
+.ins-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media(max-width:1100px){.ins-grid{grid-template-columns:1fr 1fr}}
+.ins-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:11px;cursor:pointer;transition:all .18s}
+.ins-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.ins-priority{font-size:8px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:1px;margin-bottom:5px}
+.pr-high{color:var(--rose)}.pr-medium{color:var(--gold)}.pr-low{color:var(--emerald)}
+.ins-text{font-size:11.5px;line-height:1.6;margin-bottom:6px}
+.ins-action{font-size:10px;color:var(--cyan);font-family:'JetBrains Mono',monospace}
+/* WAR ROOM */
+.idea-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:7px;cursor:pointer;transition:all .18s}
+.idea-card:hover{border-color:var(--violet);transform:translateY(-1px)}
+.idea-type{font-size:8px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:1.5px;color:var(--violet);margin-bottom:5px}
+.idea-title{font-size:12.5px;font-weight:700;margin-bottom:4px}
+.idea-desc{font-size:11.5px;color:var(--sub);line-height:1.6}
+.swipe-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.swipe-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .12s}
+.swipe-card:hover{border-color:var(--cyan);transform:translateY(-1px)}
+.swipe-lbl{font-size:8px;font-family:'JetBrains Mono',monospace;color:var(--sub);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+.swipe-title{font-size:11.5px;font-weight:600;margin-bottom:5px}
+.swipe-tags{display:flex;gap:4px;flex-wrap:wrap}
+.st{font-size:8px;padding:2px 5px;border-radius:99px;font-family:'JetBrains Mono',monospace}
+/* AD GENERATOR */
+.ad-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:7px}
+.ad-variant{font-size:8px;font-family:'JetBrains Mono',monospace;color:var(--sub);letter-spacing:1.5px;margin-bottom:6px}
+.ad-headline{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--cyan);margin-bottom:5px}
+.ad-body{font-size:11.5px;color:var(--sub);line-height:1.6;margin-bottom:7px}
+.ad-cta{display:inline-block;background:var(--cyan);color:#000;padding:3px 11px;border-radius:99px;font-size:9px;font-weight:700;font-family:'JetBrains Mono',monospace}
+/* CAPTIONS */
+.cap-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:7px}
+.cap-plat{font-size:8px;font-family:'JetBrains Mono',monospace;color:var(--sub);letter-spacing:1.5px;margin-bottom:7px}
+.cap-text{font-size:12px;line-height:1.7;margin-bottom:7px}
+.cap-tags{font-size:10.5px;color:var(--violet);font-family:'JetBrains Mono',monospace;line-height:1.8;margin-bottom:7px}
+.copy-btn{font-size:9px;color:var(--sub);cursor:pointer;font-family:'JetBrains Mono',monospace;border:1px solid var(--border);padding:2px 7px;border-radius:4px;background:none;transition:all .12s}
+.copy-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+/* TIMER */
+.timer-disp{font-family:'Syne',sans-serif;font-size:44px;font-weight:800;color:var(--cyan);letter-spacing:-3px;text-align:center;margin:8px 0}
+.timer-state{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--sub);text-align:center;margin-bottom:12px}
+/* DEADLINE */
+.dl-item{display:flex;align-items:center;gap:9px;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-bottom:5px}
+.dl-bar{width:3px;height:28px;border-radius:2px;flex-shrink:0}
+.dl-info{flex:1}
+.dl-name{font-size:12px;font-weight:600}
+.dl-client{font-size:9px;color:var(--sub);font-family:'JetBrains Mono',monospace}
+.dl-date{font-size:10px;font-family:'JetBrains Mono',monospace}
+/* TIME TRACK */
+.tt-row{display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:5px}
+.tt-info{flex:1}
+.tt-name{font-size:12.5px;font-weight:600}
+.tt-sub{font-size:10px;color:var(--sub);font-family:'JetBrains Mono',monospace}
+.tt-bar{height:2px;background:var(--border);border-radius:99px;margin-top:4px;overflow:hidden}
+.tt-fill{height:100%;border-radius:99px}
+.tt-hrs{font-family:'Syne',sans-serif;font-size:13px;font-weight:700}
+/* SEO */
+.seo-day{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:9px 11px;margin-bottom:5px}
+.seo-day-num{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--sub);margin-bottom:3px;letter-spacing:1px}
+.seo-topic{font-size:12px;font-weight:600;margin-bottom:2px}
+.seo-kw{font-size:10px;color:var(--cyan);font-family:'JetBrains Mono',monospace}
+/* COMPETITOR */
+.comp-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:7px}
+.comp-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.comp-ico{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.comp-name{font-size:12.5px;font-weight:600}
+.comp-handle{font-size:9px;color:var(--sub);font-family:'JetBrains Mono',monospace}
+.comp-trend{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--sub);margin-bottom:4px}
+.trend-tag{font-size:8px;background:rgba(0,224,122,.1);color:var(--emerald);padding:2px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-weight:700;flex-shrink:0}
+/* TREND→ACTION */
+.ta-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:10px;margin-bottom:7px;display:flex;gap:9px;cursor:pointer;transition:border .12s}
+.ta-card:hover{border-color:var(--border2)}
+.ta-type{font-size:8px;font-family:'JetBrains Mono',monospace;font-weight:700;padding:2px 6px;border-radius:4px;height:fit-content;flex-shrink:0;margin-top:2px}
+.ta-now{background:rgba(255,77,141,.12);color:var(--rose)}
+.ta-week{background:rgba(0,217,245,.1);color:var(--cyan)}
+.ta-month{background:rgba(123,92,250,.1);color:var(--violet)}
+.ta-text{font-size:11.5px;line-height:1.6;color:var(--text);margin-bottom:3px}
+.ta-action{font-size:10px;color:var(--cyan);font-family:'JetBrains Mono',monospace}
+/* AGENTS */
+.agent-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:5px;cursor:pointer;transition:border .12s}
+.agent-item:hover{border-color:var(--border2)}
+.agent-ico{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--rose));display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.agent-info{flex:1}
+.agent-name{font-size:12.5px;font-weight:600;margin-bottom:2px}
+.agent-desc{font-size:10.5px;color:var(--sub)}
+.agent-end{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.agent-status{display:flex;align-items:center;gap:4px;font-size:9px;font-family:'JetBrains Mono',monospace}
+.ds{width:5px;height:5px;border-radius:50%}
+.ds-on{background:var(--emerald);box-shadow:0 0 5px var(--emerald);animation:pulse 2s infinite}
+.ds-warn{background:var(--gold)}
+.ds-off{background:var(--rose)}
+/* SOCIAL */
+.social-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;cursor:pointer;transition:all .14s}
+.social-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.social-head{display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.social-ico{font-size:16px}
+.social-name{font-size:12.5px;font-weight:600}
+.social-handle{font-size:9px;color:var(--sub);font-family:'JetBrains Mono',monospace}
+.social-val{font-family:'Syne',sans-serif;font-size:18px;font-weight:800}
+.social-key{font-size:9px;color:var(--sub)}
+.social-bar{height:2px;background:var(--border);border-radius:99px;margin-top:9px;overflow:hidden}
+.social-fill{height:100%;border-radius:99px}
+/* DONUT */
+.donut-wrap{position:relative;width:100px;height:100px;margin:0 auto 12px}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.donut-val{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:var(--cyan)}
+.donut-key{font-size:8px;color:var(--sub);font-family:'JetBrains Mono',monospace;text-transform:uppercase}
+/* TREND */
+.trend-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
+.trend-item:last-child{border-bottom:none}
+.trend-num{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--dim);width:20px;flex-shrink:0}
+.trend-name{flex:1;font-size:12px;font-weight:500}
+.trend-delta{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--emerald)}
+/* CONTENT GRID */
+.cg3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+@media(max-width:900px){.cg3{grid-template-columns:1fr 1fr}}
+.cg-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;cursor:pointer;transition:all .18s;text-align:center}
+.cg-card:hover{border-color:var(--cyan);transform:translateY(-3px)}
+.cg-ico{font-size:22px;margin-bottom:7px}
+.cg-name{font-size:12px;font-weight:600;margin-bottom:2px}
+.cg-desc{font-size:10.5px;color:var(--sub);line-height:1.5}
+/* ONBOARD FAB */
+.ob-fab{position:fixed;bottom:18px;right:18px;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#000;border:none;border-radius:99px;padding:8px 14px;font-size:11.5px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,217,245,.25);display:flex;align-items:center;gap:6px;transition:all .18s;z-index:300;font-family:inherit}
+.ob-fab:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,217,245,.35)}
+.ob-fab-pct{background:rgba(0,0,0,.2);border-radius:99px;padding:1px 6px;font-size:9px;font-family:'JetBrains Mono',monospace}
+/* ONBOARD MODAL */
+.ob-overlay{display:none;position:fixed;inset:0;background:rgba(6,9,17,.8);backdrop-filter:blur(8px);z-index:1500;align-items:center;justify-content:center}
+.ob-overlay.open{display:flex}
+.ob-modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:24px;width:460px;max-width:95vw;box-shadow:0 24px 60px rgba(0,0,0,.6);animation:slideUp .18s ease}
+.ob-prog{height:3px;background:var(--border);border-radius:99px;margin:12px 0 16px;overflow:hidden}
+.ob-prog-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--violet));border-radius:99px;transition:width .5s ease}
+.ob-step{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:6px;cursor:pointer;transition:border .12s}
+.ob-step:hover{border-color:var(--border2)}
+.ob-step.done{opacity:.6}
+.ob-check{width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;transition:all .18s}
+.ob-step.done .ob-check{background:var(--emerald);border-color:var(--emerald);color:#000}
+.ob-step-text{flex:1;font-size:12px;font-weight:500}
+.ob-step.done .ob-step-text{text-decoration:line-through;color:var(--sub)}
+.ob-badge{font-size:9px;font-family:'JetBrains Mono',monospace;background:rgba(0,217,245,.1);color:var(--cyan);padding:1px 6px;border-radius:4px}
+canvas{max-width:100%}
+</style>
+</head>
+<body>
+
+<!-- CMD -->
+<div class="cmd-overlay" id="cmdOverlay" onclick="if(event.target===this)closeCmd()">
+  <div class="cmd-box">
+    <div class="cmd-row">
+      <span style="font-size:13px;opacity:.4">⌕</span>
+      <input class="cmd-input" id="cmdInput" placeholder="Navigate anywhere or run an action…" autocomplete="off"/>
+      <span class="cmd-esc">ESC</span>
+    </div>
+    <div class="cmd-list" id="cmdList"></div>
+    <div class="cmd-foot">
+      <span class="cmd-hint"><kbd>↑↓</kbd> navigate</span>
+      <span class="cmd-hint"><kbd>↵</kbd> select</span>
+      <span class="cmd-hint"><kbd>ESC</kbd> close</span>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIF -->
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-head">
+    <div class="notif-head-title">Notifications</div>
+    <span class="notif-mark" onclick="markAllRead()">Mark all read</span>
+  </div>
+  <div class="notif-list" id="notifList"></div>
+</div>
+
+<!-- ONBOARD -->
+<div class="ob-overlay" id="obOverlay" onclick="if(event.target===this)closeOb()">
+  <div class="ob-modal">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <span style="font-size:26px">🚀</span>
+      <div><div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800">Get Started</div><div style="font-size:11px;color:var(--sub)">Complete your ARKTECH setup</div></div>
+    </div>
+    <div class="ob-prog"><div class="ob-prog-fill" id="obFill" style="width:0%"></div></div>
+    <div id="obSteps"></div>
+    <div style="display:flex;gap:7px;justify-content:flex-end;margin-top:14px">
+      <button class="btn btn-ghost btn-sm" onclick="closeOb()">Close</button>
+      <button class="btn btn-primary btn-sm" onclick="nextObStep()">Next →</button>
+    </div>
+    <div style="text-align:center;margin-top:10px;font-size:10px;color:var(--sub);cursor:pointer" onclick="dismissOb()">Dismiss permanently</div>
+  </div>
+</div>
+
+<!-- NEW PROJECT MODAL -->
+<div class="modal-overlay" id="modalNew">
+  <div class="modal">
+    <div class="modal-title">New Project</div>
+    <div class="modal-sub">Set up a project or AI agent</div>
+    <div class="field"><label>Project Name</label><input class="inp" placeholder="e.g. ShopFlow v3"/></div>
+    <div class="field"><label>Type</label><select class="inp"><option>Website</option><option>Web App</option><option>Mobile App</option><option>AI Agent</option><option>Landing Page</option><option>E-Commerce</option></select></div>
+    <div class="field"><label>Client</label><select class="inp"><option>— Internal —</option><option>Zenova Corp</option><option>Moda Style</option><option>Podwave Media</option><option>MediClear Health</option><option>Buildstone Co.</option></select></div>
+    <div class="field"><label>Description</label><textarea class="inp" placeholder="Project goals…"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modalNew')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="closeModal('modalNew')">Create →</button>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-name">⬡ ARKTECH</div>
+      <div class="logo-tag">COMMAND CENTER v5</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-group">
+        <div class="nav-group-label">Overview</div>
+        <div class="nav-item active" onclick="go('dashboard',this)"><span class="nav-ico">⬡</span>Dashboard</div>
+        <div class="nav-item" onclick="go('briefing',this)"><span class="nav-ico">☀</span>Daily Briefing</div>
+        <div class="nav-item" onclick="go('analytics',this)"><span class="nav-ico">◈</span>Analytics</div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">Innovation & Ideation</div>
+        <div class="nav-item" onclick="go('warroom',this)"><span class="nav-ico">⚡</span>War Room</div>
+        <div class="nav-item" onclick="go('adgen',this)"><span class="nav-ico">✦</span>Ad Generator</div>
+        <div class="nav-item" onclick="go('seo',this)"><span class="nav-ico">◎</span>SEO Planner</div>
+        <div class="nav-item" onclick="go('captions',this)"><span class="nav-ico">◼</span>Caption Writer</div>
+        <div class="nav-item" onclick="go('competitors',this)"><span class="nav-ico">◬</span>Competitor Watch</div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">Management</div>
+        <div class="nav-item" onclick="go('kanban',this)"><span class="nav-ico">▦</span>Kanban Board</div>
+        <div class="nav-item" onclick="go('timetrack',this)"><span class="nav-ico">◷</span>Time Tracker</div>
+        <div class="nav-item" onclick="go('clients',this)"><span class="nav-ico">◫</span>Clients</div>
+        <div class="nav-item" onclick="go('agents',this)"><span class="nav-ico">◈</span>AI Agents<span class="nav-badge">12</span></div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">Content</div>
+        <div class="nav-item" onclick="go('social',this)"><span class="nav-ico">◎</span>Social Media</div>
+        <div class="nav-item" onclick="go('content',this)"><span class="nav-ico">◻</span>Content Studio</div>
+        <div class="nav-item" onclick="go('trends',this)"><span class="nav-ico">▲</span>Trends</div>
+        <div class="nav-item" onclick="go('growth',this)"><span class="nav-ico">◬</span>Growth</div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">System</div>
+        <div class="nav-item" onclick="go('reports',this)"><span class="nav-ico">◻</span>Reports</div>
+        <div class="nav-item" onclick="openOb()"><span class="nav-ico">◌</span>Setup</div>
+      </div>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="user-row">
+        <div class="ava">T1</div>
+        <div><div class="user-name">Ted-01.</div><div class="user-role">SUPER ADMIN</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-title" id="pageTitle">Dashboard</div>
+      <div class="search-btn" onclick="openCmd()">
+        <span style="opacity:.4;font-size:12px">⌕</span>
+        <span style="color:var(--sub)">Search or ⌘K</span>
+        <kbd style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--dim)">⌘K</kbd>
+      </div>
+      <div class="topbar-right">
+        <div class="live"><div class="dot-pulse"></div>LIVE</div>
+        <div class="icon-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle theme">☀️</div>
+        <div class="icon-btn" id="notifBtn" onclick="toggleNotif()">🔔<div class="notif-dot" id="notifDot"></div></div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modalNew')">+ New Project</button>
+      </div>
+    </header>
+    <div class="content" id="mainContent"></div>
+  </div>
+</div>
+
+<button class="ob-fab" id="obFab" onclick="openOb()">🚀 Setup<span class="ob-fab-pct" id="fabPct">0%</span></button>
+
+<script>
+// ── CLAUDE API ──
+async function callClaude(prompt,maxTok=1000){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTok,messages:[{role:'user',content:prompt}]})
+  });
+  const d=await r.json();
+  return d.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
+}
+
+// ── TABS ──
+const tabTitles={
+  dashboard:'Dashboard',briefing:'Daily Briefing',analytics:'Analytics',
+  warroom:'Creative War Room',adgen:'Ad Creative Generator',seo:'SEO Content Planner',
+  captions:'AI Caption Writer',competitors:'Competitor Watch',
+  kanban:'Kanban Board',timetrack:'Time Tracker',clients:'Client Hub',agents:'AI Agents',
+  social:'Social Media',content:'Content Studio',trends:'Tech Trends',
+  growth:'Growth Intelligence',reports:'Reports'
+};
+let currentTab='dashboard';
+const CI={};
+
+function go(tab,el){
+  currentTab=tab;
+  document.getElementById('pageTitle').textContent=tabTitles[tab]||tab;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(el)el.classList.add('active');
+  renderTab(tab);closeCmd();
+}
+
+function renderTab(tab){
+  const c=document.getElementById('mainContent');
+  Object.values(CI).forEach(ch=>{try{ch.destroy()}catch(e){}});
+  Object.keys(CI).forEach(k=>delete CI[k]);
+  c.innerHTML=`<div class="page" id="tab-${tab}">${getHTML(tab)}</div>`;
+  setTimeout(()=>initJS(tab),60);
+}
+
+// ── HTML TEMPLATES ──
+function getHTML(tab){
+  const H={
+    dashboard:`
+<div class="page-header"><div><div class="page-h">Dashboard</div><div class="page-hsub">Friday, March 13 2026 — Good morning, Ted.</div></div><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="go('briefing',null)">Daily Briefing →</button></div></div>
+<div class="card" style="margin-bottom:16px"><div class="card-head"><div><div class="card-title">◈ AI Insights</div><div class="card-sub">Live recommendations</div></div><button class="btn btn-ghost btn-sm" onclick="loadInsights()">↻ Refresh</button></div><div id="insightsArea"><div class="ai-loading"><div class="spinner"></div>Analyzing…</div></div></div>
+<div class="g4">
+  <div class="stat s1"><div class="stat-label">MRR</div><div class="stat-val">$84k</div><div class="stat-delta up">↑ 18%</div><div class="stat-ico">💰</div></div>
+  <div class="stat s2"><div class="stat-label">PROJECTS</div><div class="stat-val">48</div><div class="stat-delta up">↑ 12%</div><div class="stat-ico">⬡</div></div>
+  <div class="stat s3"><div class="stat-label">CLIENTS</div><div class="stat-val">31</div><div class="stat-delta up">↑ 5 new</div><div class="stat-ico">👥</div></div>
+  <div class="stat s4"><div class="stat-label">AI AGENTS</div><div class="stat-val">12</div><div class="stat-delta up">↑ 3 new</div><div class="stat-ico">🤖</div></div>
+</div>
+<div class="g3" style="margin-bottom:16px">
+  <div class="card" style="text-align:center"><div class="gr-wrap"><svg class="gr-svg" width="76" height="76" viewBox="0 0 76 76"><circle class="gr-bg" cx="38" cy="38" r="31"/><circle class="gr-fill" cx="38" cy="38" r="31" stroke="#00d9f5" stroke-dasharray="194.8" stroke-dashoffset="46.8"/></svg><div class="gr-center"><div class="gr-pct" style="color:var(--cyan)">76%</div></div></div><div class="card-title">Revenue</div><div style="font-size:10px;color:var(--sub);margin-top:2px">$84K / $110K</div></div>
+  <div class="card" style="text-align:center"><div class="gr-wrap"><svg class="gr-svg" width="76" height="76" viewBox="0 0 76 76"><circle class="gr-bg" cx="38" cy="38" r="31"/><circle class="gr-fill" cx="38" cy="38" r="31" stroke="#7b5cfa" stroke-dasharray="194.8" stroke-dashoffset="77.9"/></svg><div class="gr-center"><div class="gr-pct" style="color:var(--violet)">60%</div></div></div><div class="card-title">Clients</div><div style="font-size:10px;color:var(--sub);margin-top:2px">31 / 50</div></div>
+  <div class="card" style="text-align:center"><div class="gr-wrap"><svg class="gr-svg" width="76" height="76" viewBox="0 0 76 76"><circle class="gr-bg" cx="38" cy="38" r="31"/><circle class="gr-fill" cx="38" cy="38" r="31" stroke="#00e07a" stroke-dasharray="194.8" stroke-dashoffset="15.6"/></svg><div class="gr-center"><div class="gr-pct" style="color:var(--emerald)">92%</div></div></div><div class="card-title">On-Time</div><div style="font-size:10px;color:var(--sub);margin-top:2px">44 / 48 projects</div></div>
+</div>
+<div class="g23">
+  <div class="card"><div class="card-head"><div><div class="card-title">Revenue & Engagement</div><div class="card-sub">12-week</div></div><button class="btn btn-ghost btn-sm" onclick="exportChart('mainChart','Revenue')">⬇ PNG</button></div><canvas id="mainChart" height="90"></canvas></div>
+  <div class="card"><div class="card-head"><div><div class="card-title">Traffic Sources</div></div></div><div class="donut-wrap"><canvas id="donutChart"></canvas><div class="donut-center"><div class="donut-val">74%</div><div class="donut-key">organic</div></div></div>${['Organic Search','Social Media','Paid Ads','Referrals'].map((l,i)=>`<div class="prog-row"><div class="prog-head"><span style="font-size:11px">${l}</span><span style="font-size:10px;font-family:'JetBrains Mono',monospace">${[74,52,38,29][i]}%</span></div><div class="prog-track"><div class="prog-fill" style="width:${[74,52,38,29][i]}%;background:${['var(--cyan)','var(--violet)','var(--rose)','var(--emerald)'][i]}"></div></div></div>`).join('')}</div>
+</div>
+<div class="g2">
+  <div class="card"><div class="card-head"><div><div class="card-title">MRR Growth</div></div><button class="btn btn-ghost btn-sm" onclick="exportChart('mrrChart','MRR')">⬇ PNG</button></div><canvas id="mrrChart" height="90"></canvas></div>
+  <div class="card"><div class="card-head"><div><div class="card-title">Activity Feed</div></div></div>${[{e:'💰',t:'Zenova Corp invoice paid',s:'$8,400 received',c:'var(--emerald)'},{e:'🚀',t:'ShopFlow Pro deployed',s:'Production live',c:'var(--cyan)'},{e:'⚠️',t:'Podwave payment overdue',s:'3 days late',c:'var(--rose)'},{e:'🤖',t:'ContentBot — 2,341 tasks',s:'Daily record',c:'var(--violet)'},{e:'📈',t:'Revenue record',s:'$84K milestone',c:'var(--gold)'}].map(a=>`<div class="li"><div class="li-ico" style="background:${a.c}22">${a.e}</div><div class="li-info"><div class="li-name">${a.t}</div><div class="li-sub">${a.s}</div></div></div>`).join('')}</div>
+</div>`,
+
+    briefing:`
+<div class="page-header"><div><div class="page-h">Daily Briefing</div><div class="page-hsub">Your command center for today</div></div><div class="live"><div class="dot-pulse"></div>LIVE</div></div>
+<div class="g3" style="margin-bottom:16px">
+  <div class="card" style="grid-column:span 2"><div class="card-head"><div><div class="card-title">AI-Prioritized Tasks</div><div class="card-sub">Generated from your data</div></div><button class="btn btn-ghost btn-sm" onclick="loadBriefingTasks()">↻ Refresh</button></div><div id="briefingTasks"><div class="ai-loading"><div class="spinner"></div>Generating tasks…</div></div></div>
+  <div class="card" style="text-align:center"><div class="card-title" style="margin-bottom:4px">Focus Timer</div><div class="card-sub" style="margin-bottom:9px">Pomodoro</div><div class="timer-disp" id="timerDisp">25:00</div><div class="timer-state" id="timerState">READY</div><div style="display:flex;gap:6px;justify-content:center;margin-bottom:10px"><button class="btn btn-primary btn-sm" id="timerBtn" onclick="toggleTimer()">▶ Start</button><button class="btn btn-ghost btn-sm" onclick="resetTimer()">↺</button></div><div class="pills" style="justify-content:center"><button class="pill active" onclick="setTimerMins(25,this)">25m</button><button class="pill" onclick="setTimerMins(50,this)">50m</button><button class="pill" onclick="setTimerMins(5,this)">5m break</button></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);margin-top:8px" id="timerSessions">Sessions: 0</div></div>
+</div>
+<div class="g4" style="margin-bottom:16px">
+  <div class="stat s1"><div class="stat-label">REVENUE VS TARGET</div><div class="stat-val">76%</div><div class="stat-delta">$84K / $110K</div></div>
+  <div class="stat s3"><div class="stat-label">AT-RISK CLIENTS</div><div class="stat-val">1</div><div class="stat-delta down">Podwave Media</div></div>
+  <div class="stat s2"><div class="stat-label">POSTS TODAY</div><div class="stat-val">2</div><div class="stat-delta">Scheduled</div></div>
+  <div class="stat s4"><div class="stat-label">AI TASKS TODAY</div><div class="stat-val">4,821</div><div class="stat-delta up">↑ 640</div></div>
+</div>
+<div class="g2">
+  <div class="card"><div class="card-head"><div><div class="card-title">Scheduled Posts</div></div></div>${[{e:'📸',n:'Zenova Campaign Reel',t:'TODAY · 3:00 PM · INSTAGRAM'},{e:'▶️',n:'ARKTECH Behind The Scenes',t:'TODAY · 6:00 PM · TIKTOK'}].map(p=>`<div class="li"><div class="li-ico" style="background:rgba(255,77,141,.1)">${p.e}</div><div class="li-info"><div class="li-name">${p.n}</div><div class="li-sub">${p.t}</div></div><span class="badge bb">Scheduled</span></div>`).join('')}</div>
+  <div class="card"><div class="card-head"><div><div class="card-title">Deadlines This Week</div></div></div>${[{n:'Moda Style Lookbook',c:'MODA',d:'OVERDUE',col:'var(--rose)'},{n:'ShopFlow v2.1',c:'INTERNAL',d:'Mar 15',col:'var(--gold)'},{n:'Zenova AI Integration',c:'ZENOVA',d:'Mar 17',col:'var(--gold)'},{n:'DataPulse Beta',c:'INTERNAL',d:'Mar 21',col:'var(--emerald)'}].map(d=>`<div class="dl-item"><div class="dl-bar" style="background:${d.col}"></div><div class="dl-info"><div class="dl-name">${d.n}</div><div class="dl-client">${d.c}</div></div><div class="dl-date" style="color:${d.col}">${d.d}</div></div>`).join('')}</div>
+</div>`,
+
+    warroom:`
+<div class="page-header"><div><div class="page-h">⚡ Creative War Room</div><div class="page-hsub">Campaign concepts, viral hooks, naming ideas — powered by Claude</div></div><div class="live"><div class="dot-pulse"></div>AI-Powered</div></div>
+<div class="g2">
+  <div class="card"><div class="card-head"><div><div class="card-title">Idea Generator</div><div class="card-sub">Describe a brief, client, or campaign</div></div></div>
+    <div class="field"><label>Brief</label><textarea class="inp" id="warBrief" style="min-height:90px" placeholder="e.g. 'Moda Style summer TikTok campaign for Gen Z' or 'viral launch for NexusBot AI tool'…"></textarea></div>
+    <div class="field"><label>Mode</label><div class="pills"><button class="pill active" id="wm-campaign" onclick="setWM('campaign',this)">Campaign Ideas</button><button class="pill" id="wm-viral" onclick="setWM('viral',this)">Viral Hooks</button><button class="pill" id="wm-names" onclick="setWM('names',this)">Name Ideas</button><button class="pill" id="wm-angles" onclick="setWM('angles',this)">Content Angles</button><button class="pill" id="wm-trends" onclick="setWM('trends',this)">Trend→Action</button></div></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="runWarRoom()">⚡ Generate Ideas</button>
+    <div id="warOutput" style="margin-top:12px"></div>
+  </div>
+  <div>
+    <div class="card" style="margin-bottom:10px"><div class="card-head"><div><div class="card-title">Swipe File</div><div class="card-sub">Saved formats & references</div></div><button class="btn btn-ghost btn-sm">+ Add</button></div>
+      <div class="swipe-grid">${[{l:'Viral Format',t:'POV: Day in life of AI agency',tags:[['TikTok','var(--rose)'],['Trending','var(--cyan)']]},{l:'Ad Copy',t:'"The last tool you\'ll ever need"',tags:[['SaaS','var(--violet)'],['High CTR','var(--gold)']]},{l:'Campaign',t:'Before/after transformation reel',tags:[['E-com','var(--emerald)']]},{l:'Email',t:'"We fixed what you hate most"',tags:[['45% open','var(--gold)']]},{l:'Hook',t:'AI replaced our team for 24h',tags:[['Experiment','var(--rose)']]},{l:'CTA',t:'"See it live in 60 seconds →"',tags:[['Demo','var(--cyan)']]}].map(s=>`<div class="swipe-card"><div class="swipe-lbl">${s.l}</div><div class="swipe-title">${s.t}</div><div class="swipe-tags">${s.tags.map(([tx,c])=>`<span class="st" style="background:${c}18;color:${c}">${tx}</span>`).join('')}</div></div>`).join('')}</div>
+    </div>
+    <div class="card"><div class="card-head"><div><div class="card-title">Trend → Action</div><div class="card-sub">Turn hot trends into moves this week</div></div></div>
+      ${[{t:'NOW',tc:'ta-now',txt:'AI Video ↑340% — create "We built ShopFlow in 30 days" Reel',a:'Brief ContentBot →'},{t:'WEEK',tc:'ta-week',txt:'Agentic workflows trending — LinkedIn post showing your 4 agents live',a:'Draft post →'},{t:'WEEK',tc:'ta-week',txt:'TikTok Shop ↑310% — help Moda Style set up TikTok Shop integration',a:'Pitch to Moda →'},{t:'MONTH',tc:'ta-month',txt:'LinkedIn B2B Creator ↑140% — launch weekly "Agency Insider" newsletter',a:'Plan newsletter →'}].map(a=>`<div class="ta-card"><div class="ta-type ${a.tc}">${a.t}</div><div><div class="ta-text">${a.txt}</div><div class="ta-action">→ ${a.a}</div></div></div>`).join('')}
+    </div>
+  </div>
+</div>`,
+
+    adgen:`
+<div class="page-header"><div><div class="page-h">Ad Creative Generator</div><div class="page-hsub">Brief in a product — get 5 ready ad variations with copy and CTAs</div></div><div class="live"><div class="dot-pulse"></div>AI-Powered</div></div>
+<div class="g2">
+  <div class="card"><div class="card-head"><div><div class="card-title">Campaign Brief</div></div></div>
+    <div class="field"><label>Product / Service</label><input class="inp" id="adProduct" placeholder="e.g. NexusBot AI Agent"/></div>
+    <div class="field"><label>Target Audience</label><input class="inp" id="adAudience" placeholder="e.g. Small business owners, 25–45"/></div>
+    <div class="field"><label>Platform</label><select class="inp" id="adPlatform"><option>Facebook / Instagram</option><option>TikTok</option><option>Google Search</option><option>LinkedIn</option><option>YouTube Pre-Roll</option><option>Twitter / X</option></select></div>
+    <div class="field"><label>Goal</label><select class="inp" id="adGoal"><option>Drive Sign-Ups</option><option>Increase Sales</option><option>Build Brand Awareness</option><option>Get Demo Requests</option><option>App Downloads</option></select></div>
+    <div class="field"><label>Tone</label><div class="pills"><button class="pill active" id="tone-Bold" onclick="setTone(this)">Bold</button><button class="pill" id="tone-Funny" onclick="setTone(this)">Funny</button><button class="pill" id="tone-Urgent" onclick="setTone(this)">Urgent</button><button class="pill" id="tone-Professional" onclick="setTone(this)">Professional</button></div></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="generateAds()">✦ Generate 5 Variations</button>
+  </div>
+  <div class="card"><div class="card-head"><div><div class="card-title">Ad Variations</div><div class="card-sub">Ready to use or hand to designer</div></div></div><div id="adOutput"><div style="color:var(--sub);text-align:center;padding:40px 20px;font-size:12px">Fill in the brief and generate ads →</div></div></div>
+</div>`,
+
+    seo:`
+<div class="page-header"><div><div class="page-h">SEO Content Planner</div><div class="page-hsub">30-day content calendar with target keywords — powered by Claude</div></div><div class="live"><div class="dot-pulse"></div>AI-Powered</div></div>
+<div class="g2">
+  <div class="card"><div class="card-head"><div><div class="card-title">Planner Setup</div></div></div>
+    <div class="field"><label>Client Domain / Brand</label><input class="inp" id="seoDomain" placeholder="e.g. shopflow.io or Moda Style"/></div>
+    <div class="field"><label>Industry / Niche</label><input class="inp" id="seoNiche" placeholder="e.g. E-commerce SaaS, Fashion Brand"/></div>
+    <div class="field"><label>Target Audience</label><input class="inp" id="seoAudience" placeholder="e.g. online store owners, Gen Z fashion lovers"/></div>
+    <div class="field"><label>Goal</label><select class="inp" id="seoGoal"><option>Drive Organic Traffic</option><option>Generate Leads</option><option>Build Brand Authority</option><option>Product Discovery</option></select></div>
+    <div class="field"><label>Content Types</label><div class="pills"><button class="pill active" id="seo-Blog" onclick="toggleSeoType(this)">Blog</button><button class="pill active" id="seo-Social" onclick="toggleSeoType(this)">Social</button><button class="pill" id="seo-Video" onclick="toggleSeoType(this)">Video Script</button><button class="pill" id="seo-Email" onclick="toggleSeoType(this)">Email</button></div></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="generateSEO()">◈ Generate 30-Day Calendar</button>
+  </div>
+  <div class="card"><div class="card-head"><div><div class="card-title">Content Calendar</div></div></div><div id="seoOutput" style="max-height:520px;overflow-y:auto"><div style="color:var(--sub);text-align:center;padding:40px 20px;font-size:12px">Enter client details to generate their SEO plan →</div></div></div>
+</div>`,
+
+    captions:`
+<div class="page-header"><div><div class="page-h">AI Caption Writer</div><div class="page-hsub">Platform-optimized captions with hashtag sets</div></div><div class="live"><div class="dot-pulse"></div>AI-Powered</div></div>
+<div class="g2">
+  <div class="card"><div class="card-head"><div><div class="card-title">Post Brief</div></div></div>
+    <div class="field"><label>Platform</label><div class="pills"><button class="pill active" id="cp-Instagram" onclick="setCaptionPlat(this)">📸 Instagram</button><button class="pill" id="cp-TikTok" onclick="setCaptionPlat(this)">▶ TikTok</button><button class="pill" id="cp-LinkedIn" onclick="setCaptionPlat(this)">💼 LinkedIn</button><button class="pill" id="cp-Twitter" onclick="setCaptionPlat(this)">𝕏 Twitter</button></div></div>
+    <div class="field"><label>Client / Brand</label><select class="inp" id="capClient"><option>ARKTECH</option><option>Zenova Corp</option><option>Moda Style</option><option>Podwave Media</option><option>MediClear Health</option><option>Buildstone Co.</option></select></div>
+    <div class="field"><label>Describe the Post</label><textarea class="inp" id="capBrief" style="min-height:90px" placeholder="e.g. Behind-the-scenes of building an AI chatbot. Want it to feel authentic and drive profile visits…"></textarea></div>
+    <div class="field"><label>Vibe</label><div class="pills"><button class="pill active" id="cv-Authentic" onclick="setCaptionVibe(this)">Authentic</button><button class="pill" id="cv-Hype" onclick="setCaptionVibe(this)">Hype</button><button class="pill" id="cv-Educational" onclick="setCaptionVibe(this)">Educational</button><button class="pill" id="cv-Storytelling" onclick="setCaptionVibe(this)">Storytelling</button></div></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="generateCaptions()">✦ Write 3 Captions</button>
+  </div>
+  <div class="card"><div class="card-head"><div><div class="card-title">Caption Options</div><div class="card-sub">Pick, copy, and post</div></div></div><div id="capOutput"><div style="color:var(--sub);text-align:center;padding:40px 20px;font-size:12px">Your 3 captions with hashtag sets will appear here →</div></div></div>
+</div>`,
+
+    competitors:`
+<div class="page-header"><div><div class="page-h">Competitor Watch</div><div class="page-hsub">Track what's working in your niche and act on it</div></div><button class="btn btn-ghost btn-sm" onclick="generateCompInsights()">◈ AI Analysis</button></div>
+<div class="g2">
+  <div class="card"><div class="card-head"><div><div class="card-title">Competitor Activity</div></div></div>
+    ${[{e:'🏢',n:'AgencyX Pro',h:'@agencyxpro · 420K followers',badge:'br',bl:'WATCH',trends:['Daily "AI tool teardown" Reels — avg 280K views','LinkedIn newsletter: 18K subs in 60 days']},{e:'⚡',n:'DigitalEdge Co',h:'@digitaledge · 210K followers',badge:'by',bl:'MONITOR',trends:['Before/after transformation format — 3× engagement','Freemium tool launch: 4K signups in 2 weeks']},{e:'🌐',n:'BrandForge',h:'@brandforge · 95K followers',badge:'bg',bl:'SAFE',trends:['Niche B2B focus — steady, lower growth pace']}].map(c=>`<div class="comp-card"><div class="comp-head"><div class="comp-ico" style="background:rgba(0,217,245,.08)">${c.e}</div><div><div class="comp-name">${c.n}</div><div class="comp-handle">${c.h}</div></div><span class="badge ${c.badge}">${c.bl}</span></div>${c.trends.map(t=>`<div class="comp-trend"><span class="trend-tag">↑ TRENDING</span>${t}</div>`).join('')}</div>`).join('')}
+  </div>
+  <div>
+    <div class="card" style="margin-bottom:10px"><div class="card-head"><div><div class="card-title">Format Opportunities</div><div class="card-sub">Adopt these now</div></div></div>
+      ${[{t:'HOT',tc:'ta-now',txt:'AI tool teardown Reels — competitors avg 280K views. Show your agents live.',m:'REEL · IG+TIKTOK · LOW EFFORT'},{t:'B2B',tc:'ta-week',txt:'Weekly "What we built" LinkedIn post — 3× more inbound leads.',m:'POST · LINKEDIN · LOW EFFORT'},{t:'HOT',tc:'ta-now',txt:'Client transformation carousel — "X problem → how we fixed it".',m:'CAROUSEL · IG+LINKEDIN · MEDIUM'},{t:'B2B',tc:'ta-week',txt:'Free AI mini-tool as lead magnet — 4–8× email list growth.',m:'TOOL · WEBSITE · HIGH EFFORT'}].map(a=>`<div class="ta-card"><div class="ta-type ${a.tc}">${a.t}</div><div><div class="ta-text">${a.txt}</div><div class="ta-action">${a.m}</div></div></div>`).join('')}
+    </div>
+    <div class="card"><div class="card-head"><div><div class="card-title">AI Competitive Analysis</div></div></div><div id="compInsights"><div style="color:var(--sub);font-size:12px;text-align:center;padding:16px">Click "AI Analysis" for deep competitive insights →</div></div></div>
+  </div>
+</div>`,
+
+    kanban:`
+<div class="page-header"><div><div class="page-h">Kanban Board</div><div class="page-hsub">48 projects across all stages</div></div><button class="btn btn-primary btn-sm" onclick="openModal('modalNew')">+ New Project</button></div>
+<div class="kanban">
+  <div class="k-col"><div class="k-head"><span class="k-title" style="color:var(--sub)">To Do</span><span class="k-count">6</span></div><div class="k-cards">${[{t:'BuildCMS Headless API',c:'INTERNAL',d:'Mar 18',dc:'due-warn'},{t:'Podwave Podcast Rebrand',c:'PODWAVE',d:'Mar 25',dc:'due-ok'},{t:'MediClear SEO Audit',c:'MEDICLEAR',d:'Mar 28',dc:'due-ok'},{t:'Buildstone CRM Integration',c:'BUILDSTONE',d:'Apr 2',dc:'due-ok'},{t:'NexusBot v3 Roadmap',c:'INTERNAL',d:'Apr 5',dc:'due-ok'},{t:'LandKit Templates Pack',c:'INTERNAL',d:'Apr 10',dc:'due-ok'}].map(k=>`<div class="k-card"><div class="k-card-title">${k.t}</div><div class="k-card-meta"><span class="k-client">${k.c}</span><span class="k-due ${k.dc}">${k.d}</span></div></div>`).join('')}</div></div>
+  <div class="k-col"><div class="k-head"><span class="k-title" style="color:var(--gold)">In Progress</span><span class="k-count">5</span></div><div class="k-cards">${[{t:'ShopFlow Pro v2.1',c:'INTERNAL',d:'Mar 15',dc:'due-warn'},{t:'Zenova AI Integration',c:'ZENOVA',d:'Mar 17',dc:'due-warn'},{t:'Moda Style Lookbook',c:'MODA',d:'OVERDUE',dc:'due-late'},{t:'Pulse App iOS',c:'INTERNAL',d:'Mar 20',dc:'due-ok'},{t:'DataPulse Beta',c:'INTERNAL',d:'Mar 21',dc:'due-ok'}].map(k=>`<div class="k-card" style="border-color:var(--border2)"><div class="k-card-title">${k.t}</div><div class="k-card-meta"><span class="k-client">${k.c}</span><span class="k-due ${k.dc}">${k.d}</span></div></div>`).join('')}</div></div>
+  <div class="k-col"><div class="k-head"><span class="k-title" style="color:var(--violet)">In Review</span><span class="k-count">4</span></div><div class="k-cards">${[{t:'Summer Sale Ad Pack',c:'MODA',d:'Review'},{t:'Zenova Product Reel',c:'ZENOVA',d:'Today'},{t:'MediClear Website Copy',c:'MEDICLEAR',d:'Mar 16'},{t:'Podwave Thumbnails',c:'PODWAVE',d:'Mar 19'}].map(k=>`<div class="k-card"><div class="k-card-title">${k.t}</div><div class="k-card-meta"><span class="k-client">${k.c}</span><span class="k-due due-ok">${k.d}</span></div></div>`).join('')}</div></div>
+  <div class="k-col"><div class="k-head"><span class="k-title" style="color:var(--emerald)">Done</span><span class="k-count">33</span></div><div class="k-cards">${[{t:'NexusBot v2.4 Deploy',d:'✓ Mar 10'},{t:'Buildstone Onboarding',d:'✓ Mar 9'},{t:'Zenova Email Sequence',d:'✓ Mar 8'}].map(k=>`<div class="k-card" style="opacity:.55"><div class="k-card-title">${k.t}</div><div class="k-card-meta"><span class="k-due due-ok">${k.d}</span></div></div>`).join('')}<div style="text-align:center;padding:8px;font-size:9px;color:var(--sub);font-family:'JetBrains Mono',monospace">+30 more completed</div></div></div>
+</div>
+<div class="card"><div class="card-head"><div><div class="card-title">Deadline Tracker</div><div class="card-sub">At risk & overdue</div></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">${[{n:'Moda Style Lookbook',c:'MODA STYLE',d:'OVERDUE',col:'var(--rose)'},{n:'ShopFlow v2.1',c:'INTERNAL',d:'Mar 15',col:'var(--gold)'},{n:'Zenova AI Integration',c:'ZENOVA',d:'Mar 17',col:'var(--gold)'},{n:'BuildCMS API',c:'INTERNAL',d:'Mar 18',col:'var(--gold)'},{n:'Pulse App iOS',c:'INTERNAL',d:'Mar 20',col:'var(--emerald)'},{n:'DataPulse Beta',c:'INTERNAL',d:'Mar 21',col:'var(--emerald)'}].map(d=>`<div class="dl-item"><div class="dl-bar" style="background:${d.col}"></div><div class="dl-info"><div class="dl-name">${d.n}</div><div class="dl-client">${d.c}</div></div><div class="dl-date" style="color:${d.col}">${d.d}</div></div>`).join('')}</div></div>`,
+
+    timetrack:`
+<div class="page-header"><div><div class="page-h">Time Tracker</div><div class="page-hsub">Hours vs revenue — spot low-ROI clients fast</div></div></div>
+<div class="g4" style="margin-bottom:16px">
+  <div class="stat s1"><div class="stat-label">HOURS / WEEK</div><div class="stat-val">38h</div><div class="stat-delta">76% billable</div></div>
+  <div class="stat s2"><div class="stat-label">BILLABLE</div><div class="stat-val">29h</div><div class="stat-delta up">↑ 3h</div></div>
+  <div class="stat s3"><div class="stat-label">MOST TIME</div><div class="stat-val">Zenova</div><div class="stat-delta">11.2h</div></div>
+  <div class="stat s4"><div class="stat-label">AVG HOURLY RATE</div><div class="stat-val">$145</div><div class="stat-delta up">↑ $12</div></div>
+</div>
+<div class="g2">
+  <div class="card"><div class="card-head"><div><div class="card-title">Hours by Client</div><div class="card-sub">This week — profitability view</div></div></div>
+    ${[{e:'🏢',n:'Zenova Corp',s:'$8,400/mo',h:'11.2h',w:80,col:'var(--cyan)',roi:'HIGH ROI',rc:'bg'},{e:'🛍️',n:'Moda Style',s:'$6,200/mo',h:'8.4h',w:60,col:'var(--violet)',roi:'OK',rc:'bb'},{e:'🏥',n:'MediClear Health',s:'$5,100/mo',h:'5.6h',w:40,col:'var(--emerald)',roi:'HIGH ROI',rc:'bg'},{e:'🎙️',n:'Podwave Media',s:'$3,800/mo',h:'7.0h',w:50,col:'var(--gold)',roi:'LOW ROI',rc:'by'},{e:'🏗️',n:'Buildstone Co.',s:'$2,900/mo',h:'4.8h',w:35,col:'var(--rose)',roi:'REVIEW',rc:'br'}].map(t=>`<div class="tt-row"><div style="font-size:17px">${t.e}</div><div class="tt-info"><div class="tt-name">${t.n}</div><div class="tt-sub">${t.s}</div><div class="tt-bar"><div class="tt-fill" style="width:${t.w}%;background:${t.col}"></div></div></div><div style="text-align:right"><div class="tt-hrs" style="color:${t.col}">${t.h}</div><span class="badge ${t.rc}">${t.roi}</span></div></div>`).join('')}
+    <div style="background:rgba(255,184,0,.06);border:1px solid rgba(255,184,0,.18);border-radius:var(--r);padding:10px;margin-top:9px;font-size:11.5px;color:var(--sub);line-height:1.6">⚠️ <strong style="color:var(--gold)">Podwave Media</strong> — 7h for $3,800. Consider renegotiating retainer.</div>
+  </div>
+  <div class="card"><div class="card-head"><div><div class="card-title">Log Time</div></div></div>
+    <div class="field"><label>Project</label><select class="inp"><option>Zenova Corp</option><option>Moda Style</option><option>MediClear Health</option><option>Podwave Media</option><option>Buildstone Co.</option><option>— Internal —</option></select></div>
+    <div class="field"><label>Task Description</label><input class="inp" placeholder="What are you working on?"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="field"><label>Hours</label><input class="inp" type="number" placeholder="0" min="0" step="0.5"/></div>
+      <div class="field"><label>Date</label><input class="inp" type="date" style="color-scheme:dark"/></div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center">Log Entry</button>
+    <div style="margin-top:14px"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sub);margin-bottom:8px;letter-spacing:.5px">WEEKLY HOURS CHART</div><canvas id="timeChart" height="100"></canvas></div>
+  </div>
+</div>`,
+
+    clients:`
+<div class="page-header"><div><div class="page-h">Client Hub</div><div class="page-hsub">31 active accounts · $62K MRR</div></div><button class="btn btn-ghost btn-sm">+ Add Client</button></div>
+<div class="g4" style="margin-bottom:16px">
+  <div class="stat s1"><div class="stat-label">TOTAL CLIENTS</div><div class="stat-val">31</div><div class="stat-delta up">↑ 5 new</div></div>
+  <div class="stat s2"><div class="stat-label">MRR</div><div class="stat-val">$62k</div><div class="stat-delta up">↑ 14%</div></div>
+  <div class="stat s3"><div class="stat-label">NPS SCORE</div><div class="stat-val">72</div><div class="stat-delta up">↑ 4 pts</div></div>
+  <div class="stat s4"><div class="stat-label">RETENTION</div><div class="stat-val">94%</div><div class="stat-delta up">↑ 2%</div></div>
+</div>
+<div class="g2">
+  <div class="card"><div class="card-head"><div><div class="card-title">Clients</div></div></div>
+    ${[{e:'🏢',n:'Zenova Corp',s:'Web + AI Agent + Social',badge:'bg',bl:'Active',v:'$8,400'},{e:'🛍️',n:'Moda Style',s:'E-Commerce + Social + Reels',badge:'bg',bl:'Active',v:'$6,200'},{e:'🎙️',n:'Podwave Media',s:'YouTube + Podcast + Brand',badge:'by',bl:'Review',v:'$3,800'},{e:'🏥',n:'MediClear Health',s:'Website + SEO + Ads',badge:'bg',bl:'Active',v:'$5,100'},{e:'🏗️',n:'Buildstone Co.',s:'Landing Page + CRM',badge:'bb',bl:'Onboarding',v:'$2,900'}].map(c=>`<div class="li"><div class="li-ico" style="background:rgba(0,217,245,.08)">${c.e}</div><div class="li-info"><div class="li-name">${c.n}</div><div class="li-sub">${c.s}</div></div><span class="badge ${c.badge}">${c.bl}</span><strong style="font-size:12px;color:var(--emerald);font-family:'Syne',sans-serif;margin-left:5px">${c.v}/mo</strong></div>`).join('')}
+  </div>
+  <div>
+    <div class="card" style="margin-bottom:10px"><div class="card-head"><div><div class="card-title">Revenue Split</div></div></div><canvas id="clientPie" height="130"></canvas></div>
+    <div class="card"><div class="card-head"><div><div class="card-title">Health Scores</div></div></div>
+      ${[{n:'Zenova Corp',sc:88,col:'var(--emerald)',cd:13.5,signals:[['✓ Active','hs-ok'],['✓ Paid','hs-ok'],['✓ Engaged','hs-ok']]},{n:'MediClear',sc:90,col:'var(--emerald)',cd:11.2,signals:[['✓ Expanding','hs-ok'],['✓ Paid','hs-ok']]},{n:'Moda Style',sc:80,col:'var(--emerald)',cd:22.4,signals:[['✓ Active','hs-ok'],['⚠ Low resp','hs-warn']]},{n:'Podwave',sc:60,col:'var(--gold)',cd:45.0,signals:[['⚠ Review','hs-warn'],['✗ Overdue','hs-risk']]},{n:'Buildstone',sc:70,col:'var(--cyan)',cd:33.8,signals:[['✓ Onboarding','hs-ok'],['⚠ New','hs-warn']]}].map(h=>`<div class="health-card"><div class="health-ring"><svg width="40" height="40" viewBox="0 0 40 40"><circle fill="none" stroke="var(--border)" stroke-width="4" cx="20" cy="20" r="15" transform="rotate(-90 20 20)"/><circle fill="none" stroke="${h.col}" stroke-width="4" stroke-linecap="round" cx="20" cy="20" r="15" transform="rotate(-90 20 20)" stroke-dasharray="94.2" stroke-dashoffset="${h.cd}"/></svg><div class="health-num" style="color:${h.col}">${h.sc}</div></div><div class="health-info"><div class="health-name">${h.n}</div><div class="health-signals">${h.signals.map(([t,c])=>`<span class="hs ${c}">${t}</span>`).join('')}</div></div></div>`).join('')}
+    </div>
+  </div>
+</div>`,
+
+    agents:`
+<div class="page-header"><div><div class="page-h">AI Agents</div><div class="page-hsub">12 active instances</div></div><button class="btn btn-primary btn-sm">+ Deploy Agent</button></div>
+<div class="g4" style="margin-bottom:16px">
+  <div class="stat s1"><div class="stat-label">ACTIVE AGENTS</div><div class="stat-val">12</div><div class="stat-delta up">↑ 3 new</div></div>
+  <div class="stat s2"><div class="stat-label">TASKS TODAY</div><div class="stat-val">4,821</div><div class="stat-delta up">↑ 640</div></div>
+  <div class="stat s3"><div class="stat-label">AVG RESPONSE</div><div class="stat-val">1.2s</div><div class="stat-delta up">↓ 0.3s</div></div>
+  <div class="stat s4"><div class="stat-label">ACCURACY</div><div class="stat-val">97.4%</div><div class="stat-delta up">↑ 0.8%</div></div>
+</div>
+<div class="card">${[{e:'🤖',n:'ContentBot Pro',d:'Generates ads, captions, blog posts at scale',st:'Active',dc:'ds-on',tasks:'2,341',badge:'bg'},{e:'📊',n:'Analytics AI',d:'Real-time analysis, reports, anomaly detection',st:'Active',dc:'ds-on',tasks:'1,809',badge:'bb'},{e:'🎯',n:'AdTargeter',d:'Audience segmentation, bidding, A/B testing',st:'Training',dc:'ds-warn',tasks:'580',badge:'by'},{e:'💬',n:'SupportBot',d:'24/7 client support, escalation, Q&A',st:'Active',dc:'ds-on',tasks:'3,100',badge:'bg'},{e:'🔍',n:'SEO Scout',d:'Keyword research, audits, competitor gap analysis',st:'Active',dc:'ds-on',tasks:'994',badge:'bb'},{e:'⚙️',n:'DevAssist',d:'Code review, bug triage, PR summaries',st:'Offline',dc:'ds-off',tasks:'—',badge:'br'}].map(a=>`<div class="agent-item"><div class="agent-ico">${a.e}</div><div class="agent-info"><div class="agent-name">${a.n}</div><div class="agent-desc">${a.d}</div></div><div class="agent-end"><div class="agent-status"><span class="ds ${a.dc}"></span>${a.st}</div><span class="badge ${a.badge}">${a.tasks} tasks</span></div></div>`).join('')}</div>`,
+
+    social:`
+<div class="page-header"><div><div class="page-h">Social Media</div><div class="page-hsub">All platforms · AI-scheduled</div></div><div class="live"><div class="dot-pulse"></div>Live Sync</div></div>
+<div class="g3" style="margin-bottom:16px">${[{e:'📸',n:'Instagram',h:'@arktech.official',v:'284K',vt:'Followers',col:'var(--rose)',pct:71},{e:'▶️',n:'TikTok',h:'@arktechglobal',v:'1.2M',vt:'Followers',col:'var(--text)',pct:100},{e:'🎥',n:'YouTube',h:'ARKTECH Official',v:'412K',vt:'Subscribers',col:'var(--rose)',pct:82},{e:'💼',n:'LinkedIn',h:'ARKTECH Co.',v:'38K',vt:'Followers',col:'var(--violet)',pct:38},{e:'𝕏',n:'Twitter/X',h:'@ARKTECH_io',v:'92K',vt:'Followers',col:'var(--text)',pct:46},{e:'📘',n:'Facebook',h:'ARKTECH Page',v:'156K',vt:'Followers',col:'var(--violet)',pct:52}].map(s=>`<div class="social-card"><div class="social-head"><span class="social-ico">${s.e}</span><div><div class="social-name">${s.n}</div><div class="social-handle">${s.h}</div></div></div><div class="social-val" style="color:${s.col}">${s.v}</div><div class="social-key">${s.vt}</div><div class="social-bar"><div class="social-fill" style="width:${s.pct}%;background:${s.col}"></div></div></div>`).join('')}</div>
+<div class="g2">
+  <div class="card"><div class="card-head"><div><div class="card-title">Scheduled Posts</div></div><button class="btn btn-primary btn-sm">+ Schedule</button></div>${[{e:'📸',n:'Zenova Campaign — Instagram Reel',t:'TODAY · 3:00 PM · INSTAGRAM',badge:'bb'},{e:'▶️',n:'ARKTECH Behind The Scenes',t:'TOMORROW · 12PM · TIKTOK',badge:'bb'},{e:'🎥',n:'Moda Style Lookbook',t:'SAT · 10AM · YOUTUBE + IG',badge:'bp'}].map(p=>`<div class="li"><div class="li-ico" style="background:rgba(255,77,141,.1)">${p.e}</div><div class="li-info"><div class="li-name">${p.n}</div><div class="li-sub">${p.t}</div></div><span class="badge ${p.badge}">Scheduled</span></div>`).join('')}</div>
+  <div class="card"><div class="card-head"><div><div class="card-title">Client Accounts</div></div></div>${[{e:'🏢',n:'Zenova Corp — Instagram',s:'98K · 4.2% engagement',badge:'bg',bl:'Active'},{e:'🛍️',n:'Moda Style — TikTok',s:'210K · 6.1% engagement',badge:'bg',bl:'Active'},{e:'🎙️',n:'Podwave — YouTube',s:'145K · 3.8% engagement',badge:'by',bl:'Review'}].map(c=>`<div class="li"><div class="li-ico" style="background:rgba(0,217,245,.08)">${c.e}</div><div class="li-info"><div class="li-name">${c.n}</div><div class="li-sub">${c.s}</div></div><span class="badge ${c.badge}">${c.bl}</span></div>`).join('')}</div>
+</div>`,
+
+    analytics:`
+<div class="page-header"><div><div class="page-h">Analytics</div></div><div class="live"><div class="dot-pulse"></div>Live</div></div>
+<div class="g4" style="margin-bottom:16px">
+  <div class="stat s1"><div class="stat-label">PAGE VIEWS</div><div class="stat-val">2.1M</div><div class="stat-delta up">↑ 22%</div></div>
+  <div class="stat s2"><div class="stat-label">UNIQUE VISITORS</div><div class="stat-val">486K</div><div class="stat-delta up">↑ 18%</div></div>
+  <div class="stat s3"><div class="stat-label">BOUNCE RATE</div><div class="stat-val">38%</div><div class="stat-delta up">↓ 4%</div></div>
+  <div class="stat s4"><div class="stat-label">SESSION TIME</div><div class="stat-val">4m 12s</div><div class="stat-delta up">↑ 34s</div></div>
+</div>
+<div class="g2">
+  <div class="card"><div class="card-head"><div><div class="card-title">Visitor Trends</div><div class="card-sub">30-day daily unique visitors</div></div><button class="btn btn-ghost btn-sm" onclick="exportChart('analyticsChart','Visitors')">⬇ PNG</button></div><canvas id="analyticsChart" height="100"></canvas></div>
+  <div class="card"><div class="card-head"><div><div class="card-title">Project Performance</div></div></div>${[['ShopFlow Pro',94,'var(--cyan)'],['NexusBot',88,'var(--violet)'],['Pulse App',81,'var(--rose)'],['LandKit',76,'var(--emerald)'],['DataPulse',62,'var(--gold)']].map(([n,v,c])=>`<div class="prog-row"><div class="prog-head"><span style="font-size:11.5px">${n}</span><span style="font-size:10px;font-family:'JetBrains Mono',monospace">${v}%</span></div><div class="prog-track"><div class="prog-fill" style="width:${v}%;background:${c}"></div></div></div>`).join('')}</div>
+</div>`,
+
+    content:`
+<div class="page-header"><div><div class="page-h">Content Studio</div><div class="page-hsub">AI-powered content at scale</div></div><div class="live"><div class="dot-pulse"></div>AI-Powered</div></div>
+<div class="cg3" style="margin-bottom:16px">${[['🎬','Reels / Shorts','Viral video + AI voiceover'],['🖼️','Ad Creatives','Banner & social ads'],['🎞️','Animations','Motion graphics'],['📸','Product Shots','AI photography'],['✍️','Ad Copy','Headlines, CTAs'],['🎙️','Podcast / Voice','AI audio cloning'],['🎨','Brand Kits','Logos, palettes'],['📧','Email Campaigns','Sequences & flows'],['🌐','Landing Pages','One-click AI pages']].map(([e,n,d])=>`<div class="cg-card"><div class="cg-ico">${e}</div><div class="cg-name">${n}</div><div class="cg-desc">${d}</div></div>`).join('')}</div>
+<div class="g2">
+  <div class="card"><div class="card-head"><div><div class="card-title">Recent Output</div></div></div>${[{e:'🎬',n:'Zenova Product Reel',s:'REEL · 28 SEC · 1080P',badge:'bg',bl:'Published'},{e:'🖼️',n:'Summer Sale Ad Pack',s:'12 VARIANTS · FACEBOOK/IG',badge:'bb',bl:'In Review'},{e:'🎞️',n:'Pulse App Explainer',s:'ANIMATION · 45 SEC',badge:'by',bl:'Rendering'},{e:'📸',n:'Moda Lookbook Shots',s:'24 IMAGES · HIGH RES',badge:'bg',bl:'Published'}].map(c=>`<div class="li"><div class="li-ico" style="background:rgba(0,217,245,.08)">${c.e}</div><div class="li-info"><div class="li-name">${c.n}</div><div class="li-sub">${c.s}</div></div><span class="badge ${c.badge}">${c.bl}</span></div>`).join('')}</div>
+  <div class="card"><div class="card-head"><div><div class="card-title">Performance by Type</div></div></div><canvas id="contentChart" height="130"></canvas></div>
+</div>`,
+
+    trends:`
+<div class="page-header"><div><div class="page-h">Tech Trends</div><div class="page-hsub">Updated daily · Powered by web data</div></div><span class="badge bb">Live</span></div>
+<div class="g3">
+  <div class="card"><div class="card-head"><div><div class="card-title">🔥 Hottest Now</div></div></div>${[['AI Video Generation','↑ 340%'],['Agentic Workflows','↑ 280%'],['Edge AI Inference','↑ 190%'],['AR Commerce / Try-On','↑ 155%'],['Voice-First UX','↑ 120%'],['Real-Time Personalization','↑ 98%']].map(([n,d],i)=>`<div class="trend-item"><div class="trend-num">0${i+1}</div><div class="trend-name">${n}</div><div class="trend-delta">${d}</div></div>`).join('')}</div>
+  <div class="card"><div class="card-head"><div><div class="card-title">📈 Rising Fast</div></div></div>${[['Multimodal AI Apps','↑ 87%'],['AI-Powered SEO','↑ 74%'],['Serverless AI','↑ 68%'],['Micro-SaaS Bundling','↑ 62%'],['No-Code AI Builders','↑ 55%'],['Conversational Commerce','↑ 50%']].map(([n,d],i)=>`<div class="trend-item"><div class="trend-num">0${i+1}</div><div class="trend-name">${n}</div><div class="trend-delta">${d}</div></div>`).join('')}</div>
+  <div class="card"><div class="card-head"><div><div class="card-title">🌐 Platform Shifts</div></div></div>${[['TikTok Shop Growth','↑ 310%'],['YouTube Shorts','↑ 200%'],['LinkedIn B2B Creator','↑ 140%'],['Discord Communities','↑ 95%'],['Newsletter Monetization','↑ 80%'],['AI-Native Search','↑ 72%']].map(([n,d],i)=>`<div class="trend-item"><div class="trend-num">0${i+1}</div><div class="trend-name">${n}</div><div class="trend-delta">${d}</div></div>`).join('')}</div>
+</div>
+<div class="card" style="margin-top:4px"><div class="card-head"><div><div class="card-title">Trend → Action for ARKTECH</div><div class="card-sub">Translate trends into moves this week</div></div><button class="btn btn-ghost btn-sm" onclick="loadTrendActions()">◈ AI Convert</button></div>
+<div id="trendActions">${[{t:'NOW',tc:'ta-now',txt:'AI Video ↑340% — create "How we built ShopFlow in 30 days" Reel',a:'Brief ContentBot →'},{t:'NOW',tc:'ta-now',txt:'Agentic Workflows ↑280% — LinkedIn post showing your 4 AI agents running live',a:'Draft post →'},{t:'WEEK',tc:'ta-week',txt:'TikTok Shop ↑310% — pitch Moda Style on TikTok Shop integration',a:'Pitch to Moda →'},{t:'WEEK',tc:'ta-week',txt:'LinkedIn B2B Creator ↑140% — start weekly "Agency Insider" newsletter',a:'Plan newsletter →'},{t:'MONTH',tc:'ta-month',txt:'No-Code AI Builders ↑55% — build free mini-tool on ARKTECH website as lead magnet',a:'Plan mini-tool →'}].map(a=>`<div class="ta-card"><div class="ta-type ${a.tc}">${a.t}</div><div><div class="ta-text">${a.txt}</div><div class="ta-action">→ ${a.a}</div></div></div>`).join('')}</div></div>`,
+
+    growth:`
+<div class="page-header"><div><div class="page-h">Growth Intelligence</div><div class="page-hsub">B2B & B2C strategy · AI-suggested</div></div><div class="live"><div class="dot-pulse"></div>AI-Suggested</div></div>
+<div class="g2">
+  <div class="card"><div class="card-head"><div><div class="card-title">B2B Opportunities</div></div></div>${[{txt:'White-label AI agent packages for digital agencies. 3 referrals = 9 warm prospects.',m:'POTENTIAL: $24K MRR · HIGH CONFIDENCE'},{txt:'SaaS reseller program for marketing agencies — your stack supports multi-tenant.',m:'POTENTIAL: $18K MRR · MEDIUM CONFIDENCE'},{txt:'API marketplace for your AI content tools. Developer-led growth is booming.',m:'POTENTIAL: $40K ARR · HIGH CONFIDENCE'},{txt:'Social media bundles to e-commerce brands for Q4 — 6-week lead time optimal.',m:'POTENTIAL: $12K MRR · HIGH CONFIDENCE'}].map(s=>`<div class="li" style="flex-direction:column;align-items:flex-start"><div style="display:flex;gap:7px;width:100%;margin-bottom:4px"><span class="badge bp" style="flex-shrink:0">B2B</span><span style="font-size:12px">${s.txt}</span></div><div style="font-size:9px;color:var(--sub);font-family:'JetBrains Mono',monospace">${s.m}</div></div>`).join('')}</div>
+  <div class="card"><div class="card-head"><div><div class="card-title">B2C Opportunities</div></div></div>${[{txt:'TikTok UGC challenge for Pulse App — apps in your niche see 3× install lift.',m:'REACH: 2M+ · HIGH IMPACT'},{txt:'Freemium tier on NexusBot — lower barrier, convert at task limit with upsell.',m:'REACH: BROAD · HIGH IMPACT'},{txt:'Creator affiliate program — tech influencers drive 28% lower CAC than paid ads.',m:'REACH: MEDIUM · MEDIUM IMPACT'},{txt:'YouTube educational series "Build with ARKTECH" for organic signups.',m:'REACH: LONG-TERM · HIGH IMPACT'}].map(s=>`<div class="li" style="flex-direction:column;align-items:flex-start"><div style="display:flex;gap:7px;width:100%;margin-bottom:4px"><span class="badge bb" style="flex-shrink:0">B2C</span><span style="font-size:12px">${s.txt}</span></div><div style="font-size:9px;color:var(--sub);font-family:'JetBrains Mono',monospace">${s.m}</div></div>`).join('')}</div>
+</div>
+<div class="g2">
+  <div class="card"><div class="card-head"><div><div class="card-title">Conversion Funnel</div></div></div><canvas id="funnelChart" height="80"></canvas></div>
+  <div class="card"><div class="card-head"><div><div class="card-title">90-Day Revenue Forecast</div></div><button class="btn btn-ghost btn-sm" onclick="exportChart('forecastChart','Forecast')">⬇ PNG</button></div><canvas id="forecastChart" height="80"></canvas><div style="display:flex;gap:10px;margin-top:8px">${[['var(--cyan)','Actual'],['var(--violet)','Projected'],['var(--gold)','Best Case']].map(([c,l])=>`<div style="display:flex;align-items:center;gap:4px;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--sub)"><div style="width:7px;height:7px;border-radius:50%;background:${c}"></div>${l}</div>`).join('')}</div></div>
+</div>`,
+
+    reports:`
+<div class="page-header"><div><div class="page-h">Reports</div><div class="page-hsub">Auto-generated by AI</div></div><button class="btn btn-primary btn-sm">+ New Report</button></div>
+<div class="card">${[{e:'📋',n:'Weekly Performance Summary',s:'EVERY MONDAY · PDF + EMAIL',badge:'bg',bl:'Active'},{e:'📊',n:'Monthly Client Report',s:'1ST OF MONTH · ALL CLIENTS',badge:'bg',bl:'Active'},{e:'📈',n:'Social Media Analytics',s:'WEEKLY · DASHBOARD + CSV',badge:'bg',bl:'Active'},{e:'💰',n:'Revenue & Growth Report',s:'MONTHLY · EXECUTIVE SUMMARY',badge:'bp',bl:'Draft'}].map(r=>`<div class="li"><div class="li-ico" style="font-size:18px;background:rgba(0,217,245,.06)">${r.e}</div><div class="li-info"><div class="li-name">${r.n}</div><div class="li-sub">${r.s}</div></div><span class="badge ${r.badge}">${r.bl}</span><button class="btn btn-ghost btn-sm" style="margin-left:5px" onclick="exportPDF('${r.n}')">⬇ PDF</button></div>`).join('')}</div>`
+  };
+  return H[tab]||`<div class="page-header"><div class="page-h">${tabTitles[tab]||tab}</div></div><div class="card"><div style="color:var(--sub);padding:40px;text-align:center">Coming soon…</div></div>`;
+}
+
+// ── CHART DEFAULTS ──
+const co={responsive:true,plugins:{legend:{display:false}},scales:{
+  x:{grid:{color:'rgba(28,43,66,.8)'},ticks:{color:'#6b7fa0',font:{family:'JetBrains Mono',size:9}}},
+  y:{grid:{color:'rgba(28,43,66,.8)'},ticks:{color:'#6b7fa0',font:{family:'JetBrains Mono',size:9}}}
+}};
+const W=['W1','W2','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12'];
+function mc(id,cfg){const el=document.getElementById(id);if(!el)return;if(CI[id])CI[id].destroy();CI[id]=new Chart(el,cfg);}
+
+function initJS(tab){
+  if(tab==='dashboard'){
+    mc('mainChart',{type:'line',data:{labels:W,datasets:[{label:'Revenue',data:[40,48,44,52,58,55,64,70,68,76,80,84],borderColor:'#00d9f5',backgroundColor:'rgba(0,217,245,.06)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#00d9f5'},{label:'Engagement',data:[30,35,32,40,44,42,50,54,52,60,64,68],borderColor:'#7b5cfa',backgroundColor:'rgba(123,92,250,.04)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#7b5cfa'}]},options:{...co,plugins:{legend:{display:true,labels:{color:'#6b7fa0',font:{family:'JetBrains Mono',size:9}}}}}});
+    mc('donutChart',{type:'doughnut',data:{labels:['Organic','Social','Paid','Referral'],datasets:[{data:[74,52,38,29],backgroundColor:['#00d9f5','#7b5cfa','#ff4d8d','#00e07a'],borderWidth:0,hoverOffset:4}]},options:{cutout:'72%',plugins:{legend:{display:false}},responsive:true}});
+    mc('mrrChart',{type:'bar',data:{labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],datasets:[{label:'MRR',data:[42,46,48,52,55,58,60,63,66,68,72,80],backgroundColor:'rgba(0,217,245,.15)',borderColor:'#00d9f5',borderWidth:1.5,borderRadius:4},{label:'New Clients',data:[2,3,1,4,2,3,2,4,3,2,4,5],backgroundColor:'rgba(123,92,250,.15)',borderColor:'#7b5cfa',borderWidth:1.5,borderRadius:4}]},options:{...co,plugins:{legend:{display:true,labels:{color:'#6b7fa0',font:{family:'JetBrains Mono',size:9}}}}}});
+    loadInsights();
+  }
+  if(tab==='analytics'){const days=Array.from({length:30},(_,i)=>`D${i+1}`);mc('analyticsChart',{type:'line',data:{labels:days,datasets:[{data:days.map(()=>Math.floor(Math.random()*16000+12000)),borderColor:'#00d9f5',backgroundColor:'rgba(0,217,245,.06)',tension:.4,fill:true,pointRadius:0}]},options:co});}
+  if(tab==='clients'){mc('clientPie',{type:'pie',data:{labels:['Zenova','Moda','MediClear','Podwave','Buildstone','Other'],datasets:[{data:[8400,6200,5100,3800,2900,6000],backgroundColor:['#00d9f5','#7b5cfa','#ff4d8d','#00e07a','#ffb800','#2a3a52'],borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#6b7fa0',font:{family:'JetBrains Mono',size:9},padding:7,boxWidth:7}}}}});}
+  if(tab==='content'){mc('contentChart',{type:'radar',data:{labels:['Reels','Ads','Animations','Product','Email','Landing'],datasets:[{data:[92,85,78,88,72,80],borderColor:'#00d9f5',backgroundColor:'rgba(0,217,245,.07)',pointBackgroundColor:'#00d9f5',pointRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{r:{grid:{color:'rgba(28,43,66,.8)'},ticks:{display:false},pointLabels:{color:'#6b7fa0',font:{family:'JetBrains Mono',size:9}}}}}});}
+  if(tab==='timetrack'){mc('timeChart',{type:'bar',data:{labels:['Mon','Tue','Wed','Thu','Fri'],datasets:[{data:[7.5,8.2,6.8,9.1,6.4],backgroundColor:'rgba(0,217,245,.2)',borderColor:'#00d9f5',borderWidth:1.5,borderRadius:4}]},options:co});}
+  if(tab==='growth'){
+    mc('funnelChart',{type:'bar',data:{labels:['Visitors','Leads','Trials','Clients'],datasets:[{data:[100,42,18,8],backgroundColor:['rgba(0,217,245,.2)','rgba(123,92,250,.2)','rgba(255,77,141,.2)','rgba(0,224,122,.2)'],borderColor:['#00d9f5','#7b5cfa','#ff4d8d','#00e07a'],borderWidth:1.5,borderRadius:5}]},options:{...co,indexAxis:'y'}});
+    const mon=['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun'];
+    mc('forecastChart',{type:'line',data:{labels:mon,datasets:[{label:'Actual',data:[68,72,78,80,82,84,null,null,null],borderColor:'#00d9f5',backgroundColor:'rgba(0,217,245,.07)',tension:.4,fill:true,pointRadius:3,spanGaps:false},{label:'Projected',data:[null,null,null,null,null,84,91,98,108],borderColor:'rgba(123,92,250,.8)',backgroundColor:'rgba(123,92,250,.04)',tension:.4,fill:true,pointRadius:2,borderDash:[6,3],spanGaps:false},{label:'Best Case',data:[null,null,null,null,null,84,97,110,125],borderColor:'rgba(255,184,0,.4)',backgroundColor:'rgba(255,184,0,.02)',tension:.4,fill:true,pointRadius:2,borderDash:[3,5],spanGaps:false}]},options:{...co,plugins:{legend:{display:false}},scales:{y:{...co.scales.y,ticks:{...co.scales.y.ticks,callback:v=>'$'+v+'K'}}}}});
+  }
+  if(tab==='briefing')loadBriefingTasks();
+}
+
+// ── AI INSIGHTS ──
+async function loadInsights(){
+  const el=document.getElementById('insightsArea');if(!el)return;
+  el.innerHTML='<div class="ai-loading"><div class="spinner"></div>Analyzing dashboard data…</div>';
+  try{
+    const txt=await callClaude(`ARKTECH Agency data: Revenue $84K (target $110K, 76%), 31 clients, 48 projects, 12 AI agents. Funnel: 100 visitors→42 leads→18 trials→8 clients. At-risk: Podwave Media (score 60, overdue payment). Top: NexusBot 87% trial-to-paid. DevAssist offline.\n\nGenerate exactly 6 actionable AI insights. Return ONLY valid JSON:\n{"insights":[{"priority":"HIGH","text":"...","action":"..."}]}\nPriority: HIGH/MEDIUM/LOW. Text <90 chars. Action <50 chars.`,1000);
+    const d=JSON.parse(txt);
+    el.innerHTML=`<div class="ins-grid">${d.insights.map(i=>`<div class="ins-card"><div class="ins-priority pr-${i.priority.toLowerCase()}">${i.priority}</div><div class="ins-text">${i.text}</div><div class="ins-action">→ ${i.action}</div></div>`).join('')}</div>`;
+  }catch(e){
+    el.innerHTML=`<div class="ins-grid">${[{priority:'HIGH',text:'Podwave Media health 60 — payment 3 days overdue, contact today',action:'Send follow-up →'},{priority:'HIGH',text:'Revenue at 76% of $110K target — 3 warm referral leads to close now',action:'Review leads →'},{priority:'HIGH',text:'Funnel converts 8% visitor→client — test free consult CTA on landing pages',action:'A/B test CTA →'},{priority:'MEDIUM',text:'NexusBot 87% trial-to-paid — upsell push to existing e-commerce clients',action:'Create upsell →'},{priority:'MEDIUM',text:'Reels 92% performance — pitch more Reels budget to all clients',action:'Pitch clients →'},{priority:'LOW',text:'DevAssist offline — restore code review automation ASAP',action:'Fix agent →'}].map(i=>`<div class="ins-card"><div class="ins-priority pr-${i.priority.toLowerCase()}">${i.priority}</div><div class="ins-text">${i.text}</div><div class="ins-action">→ ${i.action}</div></div>`).join('')}</div>`;
+  }
+}
+
+// ── BRIEFING TASKS ──
+async function loadBriefingTasks(){
+  const el=document.getElementById('briefingTasks');if(!el)return;
+  el.innerHTML='<div class="ai-loading"><div class="spinner"></div>Generating tasks…</div>';
+  try{
+    const txt=await callClaude(`ARKTECH daily assistant. Today: Friday March 13 2026. Data: Revenue $84K/$110K. Podwave overdue 3 days. 1 overdue project (Moda Lookbook). Zenova Reel at 3PM today. 3 warm leads to close. DevAssist offline.\n\nGenerate exactly 5 prioritized tasks. Return ONLY valid JSON:\n{"tasks":[{"text":"...","tag":"...","tagColor":"..."}]}\nTag: URGENT/CLIENT/REVENUE/TECH/SOCIAL. TagColor hex: URGENT=#ff4d8d, CLIENT=#7b5cfa, REVENUE=#00e07a, TECH=#ffb800, SOCIAL=#00d9f5. Task <70 chars.`,800);
+    const d=JSON.parse(txt);
+    el.innerHTML=d.tasks.map(t=>`<div class="li" style="cursor:pointer" onclick="this.querySelector('.tck').textContent=this.querySelector('.tck').textContent?'':'✓'"><div class="tck" style="width:16px;height:16px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;transition:all .2s"></div><div style="flex:1;font-size:12.5px;font-weight:500">${t.text}</div><span style="font-size:8px;font-family:'JetBrains Mono',monospace;font-weight:700;padding:2px 6px;border-radius:4px;background:${t.tagColor}18;color:${t.tagColor}">${t.tag}</span></div>`).join('');
+  }catch(e){
+    el.innerHTML=[{text:'Follow up with Podwave Media — payment 3 days overdue',tag:'URGENT',col:'#ff4d8d'},{text:'Review Zenova product reel before 3PM publish',tag:'CLIENT',col:'#7b5cfa'},{text:'Close $26K gap — contact 3 warm referral leads',tag:'REVENUE',col:'#00e07a'},{text:'Deploy AdTargeter agent after training',tag:'TECH',col:'#ffb800'},{text:'Schedule TikTok UGC challenge for Pulse App',tag:'SOCIAL',col:'#00d9f5'}].map(t=>`<div class="li" style="cursor:pointer"><div style="width:16px;height:16px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0"></div><div style="flex:1;font-size:12.5px;font-weight:500">${t.text}</div><span style="font-size:8px;font-family:'JetBrains Mono',monospace;font-weight:700;padding:2px 6px;border-radius:4px;background:${t.col}18;color:${t.col}">${t.tag}</span></div>`).join('');
+  }
+}
+
+// ── FOCUS TIMER ──
+let tSecs=25*60,tRunning=false,tInterval=null,tDone=0,tMins=25;
+function setTimerMins(m,el){tMins=m;resetTimer();document.querySelectorAll('.pill').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active');}
+function toggleTimer(){
+  if(tRunning){clearInterval(tInterval);tRunning=false;const b=document.getElementById('timerBtn');if(b)b.textContent='▶ Resume';const s=document.getElementById('timerState');if(s)s.textContent='PAUSED';}
+  else{tRunning=true;const b=document.getElementById('timerBtn');if(b)b.textContent='⏸ Pause';
+    tInterval=setInterval(()=>{tSecs--;updateTimerDisp();if(tSecs<=0){clearInterval(tInterval);tRunning=false;tDone++;const b=document.getElementById('timerBtn');if(b)b.textContent='▶ New';const s=document.getElementById('timerState');if(s)s.textContent='COMPLETE ✓';const d=document.getElementById('timerDisp');if(d)d.style.color='var(--emerald)';const ss=document.getElementById('timerSessions');if(ss)ss.textContent='Sessions: '+tDone;}},1000);}
+}
+function resetTimer(){clearInterval(tInterval);tRunning=false;tSecs=tMins*60;const b=document.getElementById('timerBtn');if(b)b.textContent='▶ Start';const s=document.getElementById('timerState');if(s)s.textContent='READY';const d=document.getElementById('timerDisp');if(d)d.style.color='var(--cyan)';updateTimerDisp();}
+function updateTimerDisp(){const d=document.getElementById('timerDisp');if(d)d.textContent=String(Math.floor(tSecs/60)).padStart(2,'0')+':'+String(tSecs%60).padStart(2,'0');}
+
+// ── WAR ROOM ──
+let wmMode='campaign';
+function setWM(mode,el){wmMode=mode;document.querySelectorAll('[id^="wm-"]').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active');}
+async function runWarRoom(){
+  const brief=document.getElementById('warBrief')?.value.trim();if(!brief){alert('Enter a brief first!');return;}
+  const out=document.getElementById('warOutput');if(!out)return;
+  out.innerHTML='<div class="ai-loading"><div class="spinner"></div>Generating ideas…</div>';
+  const modeMap={campaign:'4 campaign concepts',viral:'5 viral hook ideas for social media',names:'6 creative name ideas',angles:'5 unique content angles',trends:'5 trend-to-action recommendations'};
+  try{
+    const txt=await callClaude(`World-class creative director at ARKTECH. Generate ${modeMap[wmMode]} for: "${brief}"\nReturn ONLY valid JSON: {"ideas":[{"type":"...","title":"...","description":"..."}]}\nType: short label. Title <60 chars. Description <110 chars.`,1000);
+    const d=JSON.parse(txt);
+    out.innerHTML=d.ideas.map(i=>`<div class="idea-card"><div class="idea-type">${i.type}</div><div class="idea-title">${i.title}</div><div class="idea-desc">${i.description}</div></div>`).join('');
+  }catch(e){out.innerHTML=[{type:'CAMPAIGN CONCEPT',title:'AI-Powered Transformation Series',description:'Document real client transformations — raw before/after stories that build trust and drive inbound.'},{type:'VIRAL HOOK',title:'"We automated 80% of our agency in 30 days"',description:'Behind-the-scenes of how ARKTECH uses its own AI agents — transparency that drives massive engagement.'},{type:'CONTENT ANGLE',title:'The Agency of the Future — Built Today',description:'Position ARKTECH as a preview of what all agencies look like in 3 years. Thought leadership.'}].map(i=>`<div class="idea-card"><div class="idea-type">${i.type}</div><div class="idea-title">${i.title}</div><div class="idea-desc">${i.description}</div></div>`).join('');}
+}
+
+// ── AD GEN ──
+let adTone='Bold';
+function setTone(el){document.querySelectorAll('[id^="tone-"]').forEach(b=>b.classList.remove('active'));el.classList.add('active');adTone=el.textContent;}
+async function generateAds(){
+  const product=document.getElementById('adProduct')?.value||'AI Digital Agency';
+  const audience=document.getElementById('adAudience')?.value||'Business owners';
+  const platform=document.getElementById('adPlatform')?.value||'Facebook';
+  const goal=document.getElementById('adGoal')?.value||'Drive Sign-Ups';
+  const out=document.getElementById('adOutput');if(!out)return;
+  out.innerHTML='<div class="ai-loading"><div class="spinner"></div>Writing ads…</div>';
+  try{
+    const txt=await callClaude(`Ad copywriter. Create 5 variations. Product: ${product} | Audience: ${audience} | Platform: ${platform} | Goal: ${goal} | Tone: ${adTone}\nReturn ONLY valid JSON: {"ads":[{"headline":"...","body":"...","cta":"..."}]}\nHeadline <50 chars. Body <110 chars. CTA <20 chars. Each distinctly different.`,1200);
+    const d=JSON.parse(txt);
+    out.innerHTML=d.ads.map((a,i)=>`<div class="ad-card"><div class="ad-variant">VARIATION ${i+1}</div><div class="ad-headline">${a.headline}</div><div class="ad-body">${a.body}</div><span class="ad-cta">${a.cta}</span></div>`).join('');
+  }catch(e){out.innerHTML=[{h:'Stop Doing Everything Manually',b:'ARKTECH AI agents handle content, ads, and analytics 24/7.',c:'See It Live →'},{h:'Your Agency, On Autopilot',b:'12 agents. 48 projects. $84K MRR. This is the modern agency.',c:'Get Started Free →'},{h:'We Build. AI Scales. You Win.',b:'From websites to AI agents — faster, smarter, at a fraction of cost.',c:'Book a Demo →'}].map((a,i)=>`<div class="ad-card"><div class="ad-variant">VARIATION ${i+1}</div><div class="ad-headline">${a.h}</div><div class="ad-body">${a.b}</div><span class="ad-cta">${a.c}</span></div>`).join('');}
+}
+
+// ── SEO ──
+let seoTypes=['Blog','Social'];
+function toggleSeoType(el){const t=el.textContent.trim();if(seoTypes.includes(t)){seoTypes=seoTypes.filter(s=>s!==t);el.classList.remove('active');}else{seoTypes.push(t);el.classList.add('active');}}
+async function generateSEO(){
+  const domain=document.getElementById('seoDomain')?.value||'example.com';
+  const niche=document.getElementById('seoNiche')?.value||'Digital Agency';
+  const audience=document.getElementById('seoAudience')?.value||'Business owners';
+  const goal=document.getElementById('seoGoal')?.value;
+  const out=document.getElementById('seoOutput');if(!out)return;
+  out.innerHTML='<div class="ai-loading"><div class="spinner"></div>Building 30-day calendar…</div>';
+  try{
+    const txt=await callClaude(`SEO content strategist. 30-day calendar. Brand: ${domain} | Niche: ${niche} | Audience: ${audience} | Goal: ${goal} | Types: ${seoTypes.join(', ')}\nReturn ONLY valid JSON: {"plan":[{"day":1,"topic":"...","keyword":"...","type":"..."}]}\nExactly 12 entries (days 1,3,5,7,10,12,15,18,20,22,25,28). Topic <55 chars. Keyword 2-4 words.`,1200);
+    const d=JSON.parse(txt);
+    out.innerHTML=d.plan.map(p=>`<div class="seo-day"><div class="seo-day-num">DAY ${p.day}</div><div class="seo-topic">${p.topic}</div><div class="seo-kw">🔑 ${p.keyword} · ${p.type.toUpperCase()}</div></div>`).join('');
+  }catch(e){out.innerHTML=[{day:1,topic:`Why AI Tools Are Replacing Manual Agency Work`,kw:'AI agency tools',type:'Blog'},{day:3,topic:'5 Things Our AI Agents Do Better Than Humans',kw:'AI content automation',type:'Social'},{day:5,topic:`How ${domain} Increased Revenue 18% With AI`,kw:'digital agency growth',type:'Blog'},{day:7,topic:'Ultimate Guide to AI-Powered Content Marketing',kw:'AI content marketing',type:'Blog'},{day:10,topic:'Client Case Study: Transformation Story',kw:'digital transformation',type:'Blog'},{day:12,topic:'TikTok vs Instagram: Where Agency Clients Win in 2026',kw:'social media ROI 2026',type:'Social'}].map(p=>`<div class="seo-day"><div class="seo-day-num">DAY ${p.day}</div><div class="seo-topic">${p.topic}</div><div class="seo-kw">🔑 ${p.kw} · ${p.type.toUpperCase()}</div></div>`).join('');}
+}
+
+// ── CAPTIONS ──
+let capPlat='Instagram',capVibe='Authentic';
+function setCaptionPlat(el){document.querySelectorAll('[id^="cp-"]').forEach(b=>b.classList.remove('active'));el.classList.add('active');capPlat=el.textContent.replace(/[📸▶💼𝕏]/g,'').trim();}
+function setCaptionVibe(el){document.querySelectorAll('[id^="cv-"]').forEach(b=>b.classList.remove('active'));el.classList.add('active');capVibe=el.textContent;}
+async function generateCaptions(){
+  const brief=document.getElementById('capBrief')?.value.trim();
+  const client=document.getElementById('capClient')?.value||'ARKTECH';
+  if(!brief){alert('Describe your post first!');return;}
+  const out=document.getElementById('capOutput');if(!out)return;
+  out.innerHTML='<div class="ai-loading"><div class="spinner"></div>Writing captions…</div>';
+  try{
+    const txt=await callClaude(`Social media expert for ${client}. 3 caption variations. Platform: ${capPlat} | Post: ${brief} | Vibe: ${capVibe}\nReturn ONLY valid JSON: {"captions":[{"caption":"...","hashtags":"..."}]}\nPlatform-appropriate length. 8-12 hashtags.`,1200);
+    const d=JSON.parse(txt);
+    out.innerHTML=d.captions.map((c,i)=>{const safe=c.caption.replace(/`/g,"'");const stags=c.hashtags.replace(/`/g,"'");return `<div class="cap-card"><div class="cap-plat">OPTION ${i+1} · ${capPlat.toUpperCase()}</div><div class="cap-text">${c.caption}</div><div class="cap-tags">${c.hashtags}</div><button class="copy-btn" onclick="copyText(this,\`${safe}\n\n${stags}\`)">⎘ Copy</button></div>`;}).join('');
+  }catch(e){out.innerHTML=`<div class="cap-card"><div class="cap-plat">OPTION 1 · ${capPlat.toUpperCase()}</div><div class="cap-text">The future of digital agencies isn't coming — it's already here. 80% of our manual work is now automated with AI, and our clients see results faster than ever. Here's what that looks like 👇</div><div class="cap-tags">#AIAgency #DigitalMarketing #FutureOfWork #AgencyLife #AITools #Automation #ARKTECH #ContentCreation #MarketingAI</div><button class="copy-btn" onclick="copyText(this,'')">⎘ Copy</button></div>`;}
+}
+function copyText(btn,text){navigator.clipboard.writeText(text).then(()=>{btn.textContent='✓ Copied!';setTimeout(()=>btn.textContent='⎘ Copy',2000);});}
+
+// ── COMPETITOR INSIGHTS ──
+async function generateCompInsights(){
+  const out=document.getElementById('compInsights');if(!out)return;
+  out.innerHTML='<div class="ai-loading"><div class="spinner"></div>Analyzing competitors…</div>';
+  try{
+    const txt=await callClaude(`ARKTECH competitive analyst. Competitors: AgencyX Pro (420K, AI teardown Reels, LinkedIn newsletter 18K), DigitalEdge Co (210K, before/after, freemium 4K signups), BrandForge (95K, niche B2B).\n\nProvide 4 competitive insights. Return ONLY valid JSON: {"insights":[{"type":"OPPORTUNITY","text":"...","action":"..."}]}\nType: OPPORTUNITY/THREAT/GAP/WIN. Text <90 chars. Action <50 chars.`,800);
+    const d=JSON.parse(txt);
+    const cols={OPPORTUNITY:'var(--emerald)',THREAT:'var(--rose)',GAP:'var(--gold)',WIN:'var(--cyan)'};
+    out.innerHTML=d.insights.map(i=>`<div class="ta-card"><div class="ta-type" style="background:${cols[i.type]||'var(--cyan)'}18;color:${cols[i.type]||'var(--cyan)'}">${i.type}</div><div><div class="ta-text">${i.text}</div><div class="ta-action">→ ${i.action}</div></div></div>`).join('');
+  }catch(e){out.innerHTML=[{t:'OPPORTUNITY',col:'var(--emerald)',txt:'AgencyX Pro\'s AI teardown format gets 280K views — ARKTECH should launch same format now',a:'Plan Reel series →'},{t:'THREAT',col:'var(--rose)',txt:'DigitalEdge\'s freemium tool drove 4K signups — directly competing for your leads',a:'Counter with free tool →'},{t:'GAP',col:'var(--gold)',txt:'No agency in niche runs a paid LinkedIn newsletter — first-mover opportunity',a:'Launch newsletter →'},{t:'WIN',col:'var(--cyan)',txt:'ARKTECH\'s AI agent stack is more advanced — make it more visible publicly',a:'Showcase agents →'}].map(i=>`<div class="ta-card"><div class="ta-type" style="background:${i.col}18;color:${i.col}">${i.t}</div><div><div class="ta-text">${i.txt}</div><div class="ta-action">→ ${i.a}</div></div></div>`).join('');}
+}
+
+// ── TREND ACTIONS ──
+async function loadTrendActions(){
+  const out=document.getElementById('trendActions');if(!out)return;
+  out.innerHTML='<div class="ai-loading"><div class="spinner"></div>Converting trends…</div>';
+  try{
+    const txt=await callClaude(`ARKTECH strategist. Top trends: AI Video ↑340%, Agentic Workflows ↑280%, TikTok Shop ↑310%, LinkedIn B2B Creator ↑140%, No-Code AI ↑55%.\n\nGenerate 6 specific ARKTECH actions. Return ONLY valid JSON: {"actions":[{"timing":"NOW","text":"...","action":"..."}]}\nTiming: NOW/WEEK/MONTH. Text <90 chars. Action <40 chars.`,800);
+    const d=JSON.parse(txt);const tc={NOW:'ta-now',WEEK:'ta-week',MONTH:'ta-month'};
+    out.innerHTML=d.actions.map(a=>`<div class="ta-card"><div class="ta-type ${tc[a.timing]||'ta-week'}">${a.timing}</div><div><div class="ta-text">${a.text}</div><div class="ta-action">→ ${a.action}</div></div></div>`).join('');
+  }catch(e){}
+}
+
+// ── THEME ──
+let darkMode=true;
+function toggleTheme(){
+  darkMode=!darkMode;document.getElementById('themeBtn').textContent=darkMode?'☀️':'🌙';
+  if(!darkMode){document.documentElement.style.setProperty('--bg','#f0f4ff');document.documentElement.style.setProperty('--bg2','#e4eaf8');document.documentElement.style.setProperty('--surface','#ffffff');document.documentElement.style.setProperty('--card','#f8faff');document.documentElement.style.setProperty('--border','#d4dcee');document.documentElement.style.setProperty('--border2','#c0ccdf');document.documentElement.style.setProperty('--text','#0d1424');document.documentElement.style.setProperty('--sub','#4a5a7a');document.documentElement.style.setProperty('--dim','#8a9ab8');}
+  else{document.documentElement.style.setProperty('--bg','#060911');document.documentElement.style.setProperty('--bg2','#0a0f1c');document.documentElement.style.setProperty('--surface','#0d1425');document.documentElement.style.setProperty('--card','#111827');document.documentElement.style.setProperty('--border','#1c2b42');document.documentElement.style.setProperty('--border2','#253650');document.documentElement.style.setProperty('--text','#e2e8f6');document.documentElement.style.setProperty('--sub','#6b7fa0');document.documentElement.style.setProperty('--dim','#2a3a52');}
+}
+
+// ── NOTIFICATIONS ──
+const notifs=[{e:'💰',bg:'rgba(0,224,122,.1)',text:'<strong>Zenova Corp</strong> invoice of $8,400 paid',time:'2 min ago',unread:true},{e:'🚀',bg:'rgba(0,217,245,.1)',text:'<strong>ShopFlow Pro</strong> deployment complete',time:'14 min ago',unread:true},{e:'⚠️',bg:'rgba(255,184,0,.1)',text:'<strong>Podwave Media</strong> payment overdue 3 days',time:'1 hr ago',unread:true},{e:'🤖',bg:'rgba(123,92,250,.1)',text:'<strong>ContentBot Pro</strong> completed 2,341 tasks',time:'2 hr ago',unread:false},{e:'📈',bg:'rgba(0,217,245,.1)',text:'Monthly revenue hit <strong>$84K</strong> — new record',time:'3 hr ago',unread:false},{e:'👤',bg:'rgba(0,217,245,.1)',text:'<strong>Buildstone Co.</strong> signed onboarding agreement',time:'Yesterday',unread:false}];
+function renderNotifs(){
+  const u=notifs.filter(n=>n.unread).length;document.getElementById('notifDot').style.display=u?'block':'none';
+  document.getElementById('notifList').innerHTML=notifs.map(n=>`<div class="notif-item${n.unread?' unread':''}"><div class="notif-ico" style="background:${n.bg}">${n.e}</div><div class="notif-body"><div class="notif-text">${n.text}</div><div class="notif-time">${n.time}</div></div>${n.unread?'<div class="notif-udot"></div>':''}</div>`).join('');
+}
+function toggleNotif(){const p=document.getElementById('notifPanel');p.classList.toggle('open');if(p.classList.contains('open'))renderNotifs();}
+function markAllRead(){notifs.forEach(n=>n.unread=false);renderNotifs();}
+document.addEventListener('click',e=>{const p=document.getElementById('notifPanel');if(p.classList.contains('open')&&!p.contains(e.target)&&e.target!==document.getElementById('notifBtn'))p.classList.remove('open');});
+
+// ── CMD ──
+const cmds=[{ico:'⬡',text:'Dashboard',fn:()=>go('dashboard',null)},{ico:'☀',text:'Daily Briefing',fn:()=>go('briefing',null),kbd:'G B'},{ico:'◈',text:'Analytics',fn:()=>go('analytics',null)},{ico:'⚡',text:'War Room',fn:()=>go('warroom',null),kbd:'G W'},{ico:'✦',text:'Ad Generator',fn:()=>go('adgen',null)},{ico:'◎',text:'SEO Planner',fn:()=>go('seo',null)},{ico:'◼',text:'Caption Writer',fn:()=>go('captions',null)},{ico:'◬',text:'Competitor Watch',fn:()=>go('competitors',null)},{ico:'▦',text:'Kanban Board',fn:()=>go('kanban',null),kbd:'G K'},{ico:'◷',text:'Time Tracker',fn:()=>go('timetrack',null)},{ico:'◫',text:'Clients',fn:()=>go('clients',null)},{ico:'◈',text:'AI Agents',fn:()=>go('agents',null)},{ico:'◎',text:'Social Media',fn:()=>go('social',null)},{ico:'◻',text:'Content Studio',fn:()=>go('content',null)},{ico:'▲',text:'Trends',fn:()=>go('trends',null)},{ico:'◬',text:'Growth',fn:()=>go('growth',null)},{ico:'◻',text:'Reports',fn:()=>go('reports',null)},{ico:'➕',text:'New Project',fn:()=>{closeCmd();openModal('modalNew');}},{ico:'☀️',text:'Toggle Theme',fn:()=>{closeCmd();toggleTheme();}},{ico:'🔔',text:'Notifications',fn:()=>{closeCmd();toggleNotif();}}];
+let cmdSel=0,cmdF=[...cmds];
+function openCmd(){document.getElementById('cmdOverlay').classList.add('open');document.getElementById('cmdInput').value='';cmdSel=0;renderCmd('');setTimeout(()=>document.getElementById('cmdInput').focus(),50);}
+function closeCmd(){document.getElementById('cmdOverlay').classList.remove('open');}
+function renderCmd(q){
+  cmdF=q?cmds.filter(c=>c.text.toLowerCase().includes(q.toLowerCase())):cmds;
+  const list=document.getElementById('cmdList');
+  if(!cmdF.length){list.innerHTML='<div style="padding:16px;text-align:center;color:var(--sub);font-size:12px">No results</div>';return;}
+  list.innerHTML='<div class="cmd-section">Quick Actions</div>'+cmdF.map((c,i)=>`<div class="cmd-item${i===cmdSel?' sel':''}" onclick="cmdF[${i}].fn()"><div class="cmd-item-ico">${c.ico}</div><div class="cmd-item-text">${c.text}</div>${c.kbd?`<div class="cmd-item-kbd">${c.kbd}</div>`:''}</div>`).join('');
+}
+function updateCmdSel(){document.querySelectorAll('.cmd-item').forEach((el,i)=>el.classList.toggle('sel',i===cmdSel));document.querySelectorAll('.cmd-item')[cmdSel]?.scrollIntoView({block:'nearest'});}
+document.getElementById('cmdInput').addEventListener('input',function(){cmdSel=0;renderCmd(this.value);});
+document.getElementById('cmdInput').addEventListener('keydown',function(e){if(e.key==='ArrowDown'){cmdSel=Math.min(cmdSel+1,cmdF.length-1);updateCmdSel();e.preventDefault();}if(e.key==='ArrowUp'){cmdSel=Math.max(cmdSel-1,0);updateCmdSel();e.preventDefault();}if(e.key==='Enter'&&cmdF[cmdSel])cmdF[cmdSel].fn();if(e.key==='Escape')closeCmd();});
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();openCmd();}if((e.metaKey||e.ctrlKey)&&e.key==='n'){e.preventDefault();openModal('modalNew');}});
+
+// ── MODALS ──
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.getElementById('modalNew').addEventListener('click',function(e){if(e.target===this)closeModal('modalNew');});
+
+// ── ONBOARDING ──
+const obSteps=[{text:'Add your first project',badge:'5 min',done:true},{text:'Connect a client account',badge:'3 min',done:true},{text:'Deploy an AI Agent',badge:'10 min',done:false},{text:'Set up content templates',badge:'5 min',done:false},{text:'Configure social accounts',badge:'8 min',done:false},{text:'Review growth opportunities',badge:'5 min',done:false}];
+function renderOb(){
+  const done=obSteps.filter(s=>s.done).length;const pct=Math.round(done/obSteps.length*100);
+  document.getElementById('obFill').style.width=pct+'%';document.getElementById('fabPct').textContent=pct+'%';
+  document.getElementById('obSteps').innerHTML=obSteps.map((s,i)=>`<div class="ob-step${s.done?' done':''}" onclick="toggleOb(${i})"><div class="ob-check">${s.done?'✓':''}</div><div class="ob-step-text">${s.text}</div><span class="ob-badge">${s.badge}</span></div>`).join('');
+}
+function toggleOb(i){obSteps[i].done=!obSteps[i].done;renderOb();}
+function nextObStep(){const n=obSteps.findIndex(s=>!s.done);if(n>=0){obSteps[n].done=true;renderOb();}}
+function openOb(){renderOb();document.getElementById('obOverlay').classList.add('open');}
+function closeOb(){document.getElementById('obOverlay').classList.remove('open');}
+function dismissOb(){closeOb();document.getElementById('obFab').style.display='none';}
+document.getElementById('obOverlay').addEventListener('click',function(e){if(e.target===this)closeOb();});
+
+// ── EXPORT ──
+function exportChart(id,name){const el=document.getElementById(id);if(!el)return;const a=document.createElement('a');a.download=name+'_ARKTECH.png';a.href=el.toDataURL('image/png');a.click();}
+function exportPDF(name){const w=window.open('','_blank');w.document.write(`<html><head><title>${name}</title><style>body{font-family:sans-serif;padding:40px}h1{color:#00a8c2}p{color:#444;line-height:1.7}.meta{font-size:12px;color:#888}</style></head><body><h1>ARKTECH — ${name}</h1><p class="meta">Generated: ${new Date().toLocaleDateString()} · ARKTECH v5</p><hr/><p>Revenue: <strong>$84,000</strong> (+18%)</p><p>Active clients: <strong>31</strong> · Projects: <strong>48</strong> · AI Agents: <strong>12</strong></p></body></html>`);w.document.close();w.print();}
+
+// ── INIT ──
+renderNotifs();renderOb();
+go('dashboard',document.querySelector('.nav-item.active'));
+</script>
+</body>
+</html>
